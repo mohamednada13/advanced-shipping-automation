@@ -103,29 +103,42 @@ if __name__ == "__main__":
     print("==================================================")
     print("🚢 ADVANCED FREIGHT OPERATIONAL SCRAPER v3.0 ✈️")
     print("==================================================")
-    print("Select Shipment Type:")
-    print("1) Loose Cargo / Air Parcels / Pallets (LCL/Air)")
-    print("2) Full Container Load (FCL - Ocean)")
-    ship_type = input("👉 Enter choice (1 or 2): ").strip()
 
-    print(
-        "\n💡 Tip: Use 3-letter codes for Airports (CAI) & 5-letter codes for Ports (ITGOA)"
-    )
-    origin_input = input("📍 Enter Origin Code: ").strip().upper()
-    dest_input = input("🏁 Enter Destination Code: ").strip().upper()
-
-    weight_input = ""
-    volume_input = ""
-    container_input = ""
-
-    if ship_type == "1":
-        weight_input = input("⚖️ Enter Gross Weight in KG: ").strip()
-        volume_input = input("📦 Enter Total Volume in CBM: ").strip()
+    # Check if arguments are supplied via GitHub Actions / CLI
+    if len(sys.argv) > 1:
+        print("🤖 Running in Automation Mode (GitHub Actions)...")
+        # sys.argv[0] is the script name itself, args start from index 1
+        ship_type       = sys.argv[1].strip()
+        origin_input    = sys.argv[2].strip().upper()
+        dest_input      = sys.argv[3].strip().upper()
+        weight_input    = sys.argv[4].strip()
+        volume_input    = sys.argv[5].strip()
+        container_input = sys.argv[6].strip()
     else:
-        print("\nSelect Container Size:")
-        print("1) 20FT Standard Container")
-        print("2) 40FT High Cube Container")
-        container_input = input("👉 Enter choice (1 or 2): ").strip()
+        # Fallback for manual local terminal execution
+        print("Select Shipment Type:")
+        print("1) Loose Cargo / Air Parcels / Pallets (LCL/Air)")
+        print("2) Full Container Load (FCL - Ocean)")
+        ship_type = input("👉 Enter choice (1 or 2): ").strip()
+
+        print(
+            "\n💡 Tip: Use 3-letter codes for Airports (CAI) & 5-letter codes for Ports (ITGOA)"
+        )
+        origin_input = input("📍 Enter Origin Code: ").strip().upper()
+        dest_input = input("🏁 Enter Destination Code: ").strip().upper()
+
+        weight_input = ""
+        volume_input = ""
+        container_input = ""
+
+        if ship_type == "1":
+            weight_input = input("⚖️ Enter Gross Weight in KG: ").strip()
+            volume_input = input("📦 Enter Total Volume in CBM: ").strip()
+        else:
+            print("\nSelect Container Size:")
+            print("1) 20FT Standard Container")
+            print("2) 40FT High Cube Container")
+            container_input = input("👉 Enter choice (1 or 2): ").strip()
 
     if not origin_input or not dest_input:
         print("❌ Port codes are mandatory. Exiting.")
