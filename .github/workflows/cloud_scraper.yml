@@ -1,0 +1,48 @@
+name: Cloud Shipping Scraper UI
+
+on:
+  workflow_dispatch:
+    inputs:
+      shipment_type:
+        description: "Shipment Type (1 for LCL/Air, 2 for FCL)"
+        required: true
+        default: "1"
+      origin:
+        description: "Origin Code (e.g., ITGOA, CAI)"
+        required: true
+      destination:
+        description: "Destination Code (e.g., EGALY, DXB)"
+        required: true
+      weight:
+        description: "Weight in KG"
+        required: false
+        default: "0"
+      volume:
+        description: "Volume in CBM"
+        required: false
+        default: "0"
+      container_size:
+        description: "Container Size (1 for 20FT, 2 for 40HC)"
+        required: false
+        default: "0"
+
+jobs:
+  run-scraper:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.10"
+
+    - name: Install Dependencies
+      run: |
+        pip install playwright pandas openpyxl
+        playwright install chromium
+
+    - name: Execute Cloud Scraper Engine
+      run: |
+        python shipping_scraper.py "${{ github.event.inputs.shipment_type }}" "${{ github.event.inputs.origin }}" "${{ github.event.inputs.destination }}" "${{ github.event.inputs.weight }}" "${{ github.event.inputs.volume }}" "${{ github.event.inputs.container_size }}"
