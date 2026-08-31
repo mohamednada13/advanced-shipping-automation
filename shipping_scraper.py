@@ -12,7 +12,7 @@ from playwright.sync_api import sync_playwright
 
 def send_shipping_email(excel_filepath, origin, destination):
     SENDER_EMAIL = "mohamednada1381979@gmail.com"  
-    SENDER_PASSWORD = "ghp_umSg3WmjEgWTtKGSD1mhVZjqTpLMDm423RdM"
+    SENDER_PASSWORD = "slnhidotfcqkcaoz"
     RECEIVER_EMAIL = "mohamednada1381979@gmail.com" 
 
     print("📨 Preparing final automated email report...")
