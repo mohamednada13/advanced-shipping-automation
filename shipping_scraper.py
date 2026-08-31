@@ -2,11 +2,48 @@ import sys
 import random
 import time
 import os
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from email.mime.base import MIMEBase
+from email import encoders
 import pandas as pd
 from playwright.sync_api import sync_playwright
 
-# استدعاء دالة الإرسال من الموديول المستقل الخارجي
-from email_sender import send_shipping_email
+def send_shipping_email(excel_filepath, origin, destination):
+    SENDER_EMAIL = "mohamednada1381979@gmail.com"  
+    SENDER_PASSWORD = "ghp_umSg3WmjEgWTtKGSD1mhVZjqTpLMDm423RdM"
+    RECEIVER_EMAIL = "mohamednada1381979@gmail.com" 
+
+    print("📨 Preparing final automated email report...")
+    msg = MIMEMultipart()
+    msg['From'] = SENDER_EMAIL
+    msg['To'] = RECEIVER_EMAIL
+    msg['Subject'] = f"📊 Freight Rates Report: {origin} ➡️ {destination}"
+    
+    body = f"Hi Mohamed,\n\nAttached is the automated enterprise detailed freight rates comparison report.\n\nRoute Details: {origin} to {destination}\n\nRegards,\nYour Advanced Cloud Automation System."
+    msg.attach(MIMEText(body, 'plain', 'utf-8'))
+    
+    if excel_filepath and os.path.exists(excel_filepath):
+        print(f"📎 Attaching generated excel report: {excel_filepath}")
+        with open(excel_filepath, "rb") as attachment:
+            part = MIMEBase("application", "octet-stream")
+            part.set_payload(attachment.read())
+            encoders.encode_base64(part)
+            part.add_header("Content-Disposition", f"attachment; filename={os.path.basename(excel_filepath)}")
+            msg.attach(part)
+    else:
+        print("⚠️ Excel artifact not found.")
+
+    try:
+        server = smtplib.SMTP("://gmail.com", 587)
+        server.starttls()  
+        server.login(SENDER_EMAIL, SENDER_PASSWORD)
+        server.sendmail(SENDER_EMAIL, RECEIVER_EMAIL, msg.as_string())
+        server.quit()
+        print("🚀 Success! Enterprise rate report has been delivered to your inbox.")
+    except Exception as e:
+        print(f"❌ Email transmission failed: {e}")
 
 def advanced_freight_scraper(origin, destination, weight, volume, shipment_type, count_20ft, count_40ft, start_date, end_date, cargo_value, target_currency):
     print(f"\n⏳ Activating Enterprise Financial Logistics Engine for Route: {origin} ➡️ {destination}...")
@@ -73,7 +110,7 @@ def advanced_freight_scraper(origin, destination, weight, volume, shipment_type,
                     prices_pool.append(p_raw)
                     rate_20ft_pool.append(0.0)
                     rate_40ft_pool.append(0.0)
-                    rate_lcl.append(round(single_air_usd, 2))
+                    rate_lcl_pool.append(round(single_air_usd, 2))
                     
                 transit_times = [f"{1 + cycle}-{2 + i} Days" for i in range(len(carriers))]
                 
@@ -160,7 +197,6 @@ def advanced_freight_scraper(origin, destination, weight, volume, shipment_type,
     }
     
     df = pd.DataFrame(df_data).drop_duplicates(subset=["Carrier / Line Name", f"Total Freight Cost ({target_currency})"])
-    
     filename = f"freight_report_{origin}_to_{destination}_{target_currency}.xlsx"
     df.to_excel(filename, index=False)
     print(f"✅ Enterprise detailed multi-currency report compiled: {filename}")
@@ -168,37 +204,38 @@ def advanced_freight_scraper(origin, destination, weight, volume, shipment_type,
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
-        ship_type        = sys.argv[1].strip()
-        origin_input     = sys.argv[2].strip().upper()
-        dest_input       = sys.argv[3].strip().upper()
-        weight_input     = sys.argv[4].strip()
-        volume_input     = sys.argv[5].strip()
-        count_20ft_input = sys.argv[6].strip()
-        count_40ft_input = sys.argv[7].strip()
-        start_date_input = sys.argv[8].strip() if len(sys.argv) > 8 else "2026-09-01"
-        end_date_input   = sys.argv[9].strip() if len(sys.argv) > 9 else "2026-09-15"
-        cargo_value_input = sys.argv[10].strip() if len(sys.argv) > 10 else "0"
-        target_currency_input = sys.argv[11].strip().upper() if len(sys.argv) > 11 else "USD"
+        clean_args = list(sys.argv)
+        script_name = clean_args.pop(0)
+        ship_type = clean_args.pop(0).strip()
+        origin_input = clean_args.pop(0).strip().upper()
+        dest_input = clean_args.pop(0).strip().upper()
+        weight_input = clean_args.pop(0).strip()
+        volume_input = clean_args.pop(0).strip()
+        count_20ft_input = clean_args.pop(0).strip()
+        count_40ft_input = clean_args.pop(0).strip()
+        start_date_input = clean_args.pop(0).strip() if len(clean_args) > 0 else "2026-09-01"
+        end_date_input = clean_args.pop(0).strip() if len(clean_args) > 0 else "2026-09-15"
+        cargo_value_input = clean_args.pop(0).strip() if len(clean_args) > 0 else "0"
+        target_currency_input = clean_args.pop(0).strip().upper() if len(clean_args) > 0 else "USD"
     else:
         print("Select Shipment Type (1: LCL/Air, 2: FCL & Hybrid Mix):")
-        ship_type = input("👉 Choice: ").strip()
-        origin_input = input("📍 Origin Code: ").strip().upper()
-        dest_input = input("🏁 Destination Code: ").strip().upper()
+        ship_type = input("Choice: ").strip()
+        origin_input = input("Origin Code: ").strip().upper()
+        dest_input = input("Destination Code: ").strip().upper()
         weight_input, volume_input, count_20ft_input, count_40ft_input = "", "", "", ""
         if ship_type == "1":
-            weight_input = input("⚖️ Weight KG: ").strip()
-            volume_input = input("📦 Volume CBM: ").strip()
+            weight_input = input("Weight KG: ").strip()
+            volume_input = input("Volume CBM: ").strip()
         else:
-            count_20ft_input = input("🔢 Qty of 20FT Containers: ").strip()
-            count_40ft_input = input("🔢 Qty of 40FT Containers: ").strip()
-            weight_input = input("⚖️ Ziyada Weight KG (Optional): ").strip()
-            volume_input = input("📦 Ziyada Volume CBM (Optional): ").strip()
-            
+            count_20ft_input = input("Qty of 20FT Containers: ").strip()
+            count_40ft_input = input("Qty of 40FT Containers: ").strip()
+            weight_input = input("Ziyada Weight KG (Optional): ").strip()
+            volume_input = input("Ziyada Volume CBM (Optional): ").strip()
         print("\n📅 Optional Details:")
-        start_date_input = input("📅 Start Date (YYYY-MM-DD): ").strip()
-        end_date_input = input("📅 End Date (YYYY-MM-DD): ").strip()
-        cargo_value_input = input("💰 Cargo Value: ").strip()
-        target_currency_input = input("💱 Currency (USD or EUR): ").strip().upper()
+        start_date_input = input("Start Date (YYYY-MM-DD): ").strip()
+        end_date_input = input("End Date (YYYY-MM-DD): ").strip()
+        cargo_value_input = input("Cargo Value: ").strip()
+        target_currency_input = input("Currency (USD or EUR): ").strip().upper()
 
     report_file = advanced_freight_scraper(
         origin_input, dest_input, weight_input, volume_input, ship_type, 
@@ -207,3 +244,10 @@ if __name__ == "__main__":
     )
     
     if report_file:
+        send_shipping_email(report_file, origin_input, dest_input)
+        try:
+            os.remove(report_file)
+            print("Cleanup successful.")
+        except Exception as e:
+            print(f"Cleanup note: {e}")
+                
