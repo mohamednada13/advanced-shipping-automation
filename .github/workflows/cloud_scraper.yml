@@ -25,6 +25,18 @@ on:
         description: "Container Size (1 for 20FT, 2 for 40HC)"
         required: false
         default: "0"
+      start_date:
+        description: "Start Date (YYYY-MM-DD)"
+        required: false
+        default: "2026-09-01"
+      end_date:
+        description: "End Date (YYYY-MM-DD)"
+        required: false
+        default: "2026-09-15"
+      cargo_value:
+        description: "Cargo Value in USD (For Insurance)"
+        required: false
+        default: "5000"
 
 jobs:
   run-scraper:
@@ -45,4 +57,4 @@ jobs:
 
     - name: Execute Cloud Scraper Engine
       run: |
-        python shipping_scraper.py "${{ github.event.inputs.shipment_type }}" "${{ github.event.inputs.origin }}" "${{ github.event.inputs.destination }}" "${{ github.event.inputs.weight }}" "${{ github.event.inputs.volume }}" "${{ github.event.inputs.container_size }}"
+        python shipping_scraper.py "${{ github.event.inputs.shipment_type }}" "${{ github.event.inputs.origin }}" "${{ github.event.inputs.destination }}" "${{ github.event.inputs.weight }}" "${{ github.event.inputs.volume }}" "${{ github.event.inputs.container_size }}" "${{ github.event.inputs.start_date }}" "${{ github.event.inputs.end_date }}" "${{ github.event.inputs.cargo_value }}"
