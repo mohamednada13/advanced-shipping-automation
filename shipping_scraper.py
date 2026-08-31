@@ -4,6 +4,8 @@ import time
 import os
 import pandas as pd
 from playwright.sync_api import sync_playwright
+
+# استدعاء دالة الإرسال من الموديول المستقل الخارجي تطبيقاً لمبدأ الـ Decoupling
 from email_sender import send_shipping_email
 
 def advanced_freight_scraper(origin, destination, weight, volume, shipment_type, count_20ft, count_40ft, start_date, end_date, cargo_value, target_currency):
@@ -19,7 +21,6 @@ def advanced_freight_scraper(origin, destination, weight, volume, shipment_type,
     dates_pool = []
     insurance_pool = []
     
-    # مصفوفات تفصيل الأسعار الفردية
     rate_20ft_pool = []
     rate_40ft_pool = []
     rate_lcl_pool = []
@@ -37,7 +38,7 @@ def advanced_freight_scraper(origin, destination, weight, volume, shipment_type,
     search_cycles = 3 if (start_date and end_date) else 1
     
     for cycle in range(search_cycles):
-        if shipment_type == "1":  # طرود أو بالتات مجزأة فقط LCL / Air
+        if shipment_type == "1":  
             if is_ocean_port:
                 base_carriers = ["DSV Logistics", "Kuehne + Nagel", "DB Schenker", "DHL Forwarding", "Schenker Ocean", "Agility Logistics"]
                 random.shuffle(base_carriers)
@@ -47,7 +48,6 @@ def advanced_freight_scraper(origin, destination, weight, volume, shipment_type,
                 chargeable_volume = max(v_num, w_num / 1000)
                 base_rate = random.randint(45, 65) + (cycle * 5)
                 
-                # تفصيل الأسعار للمجزأ
                 for i in range(len(carriers)):
                     single_lcl_usd = base_rate + i * 12
                     p_raw = (chargeable_volume * single_lcl_usd) + 90
@@ -77,7 +77,7 @@ def advanced_freight_scraper(origin, destination, weight, volume, shipment_type,
                     
                 transit_times = [f"{1 + cycle}-{2 + i} Days" for i in range(len(carriers))]
                 
-        else:  # شحن الحاويات والميكس المختلط (FCL & Hybrid)
+        else:  
             base_carriers = ["Maersk Line", "CMA CGM", "MSC Shipping", "Hapag-Lloyd", "ONE Line", "COSCO Shipping", "Evergreen Marine"]
             random.shuffle(base_carriers)
             carriers = base_carriers[:4 + cycle]
@@ -85,18 +85,16 @@ def advanced_freight_scraper(origin, destination, weight, volume, shipment_type,
             transit_times = [f"{11 + cycle}-{15 + i} Days" for i in range(len(carriers))]
             
             for i in range(len(carriers)):
-                # الأسعار الفردية لكل وحدة بناءً على السوق التجاري
                 single_20ft_usd = random.randint(1400, 1800) + (cycle * 100) + (i * 50)
                 single_40ft_usd = random.randint(2400, 2900) + (cycle * 150) + (i * 80)
                 single_lcl_usd = random.randint(45, 65) + (i * 5) if (v_num > 0 or w_num > 0) else 0
                 
-                # الحساب الإجمالي
                 price_20ft = single_20ft_usd * c20
                 price_40ft = single_40ft_usd * c40
                 price_lcl = (max(v_num, w_num / 1000) * single_lcl_usd + 50) if single_lcl_usd > 0 else 0
                 
                 total_freight_usd = price_20ft + price_40ft + price_lcl
-                if total_freight_usd == 0: # صمام أمان للأصفار
+                if total_freight_usd == 0: 
                     single_20ft_usd = random.randint(1400, 1800) + i * 100
                     total_freight_usd = single_20ft_usd
                     
@@ -110,7 +108,6 @@ def advanced_freight_scraper(origin, destination, weight, volume, shipment_type,
         transit_pool.extend(transit_times)
         dates_pool.extend([f"Window Cycle {cycle + 1}"] * len(carriers))
 
-    # معالجة وتصريف العملات المالية والتأمين لكل سطر بشكل منفصل وتنافسي
     final_prices = []
     final_insurance = []
     final_rate_20ft = []
@@ -122,7 +119,6 @@ def advanced_freight_scraper(origin, destination, weight, volume, shipment_type,
         calculated_insurance_usd = (cif_value_usd * 1.10) * 0.003
         final_insurance_usd = max(50.0, calculated_insurance_usd) if val_num > 0 else 0.0
         
-        # تدوير التحويل لليورو أو الدولار بدقة هندسية شاملة لكل عمود مالي
         if target_currency == "EUR":
             p_fin = round(p_raw / fx_rate, 2)
             ins_fin = round(final_insurance_usd / fx_rate, 2)
@@ -141,14 +137,12 @@ def advanced_freight_scraper(origin, destination, weight, volume, shipment_type,
         final_rate_20ft.append(f"{currency_symbol}{r20_fin}" if r20_fin > 0 else "-")
         final_rate_40ft.append(f"{currency_symbol}{r40_fin}" if r40_fin > 0 else "-")
         
-        # تخصيص شارة السعر للمكعب أو الكيلو الجوي المحددة
         if rlcl_fin > 0:
             unit_label = "/KG" if shipment_type == "1" and not is_ocean_port else "/CBM"
             final_rate_lcl.append(f"{currency_symbol}{rlcl_fin}{unit_label}")
         else:
             final_rate_lcl.append("-")
 
-    # صياغة قاموس الأعمدة الاحترافي النهائي لـ Pandas
     df_data = {
         "Carrier / Line Name": carriers_pool,
         f"20FT Rate ({target_currency})": final_rate_20ft,
@@ -166,6 +160,7 @@ def advanced_freight_scraper(origin, destination, weight, volume, shipment_type,
     }
     
     df = pd.DataFrame(df_data).drop_duplicates(subset=["Carrier / Line Name", f"Total Freight Cost ({target_currency})"])
+    
     filename = f"freight_report_{origin}_to_{destination}_{target_currency}.xlsx"
     df.to_excel(filename, index=False)
     print(f"✅ Enterprise detailed multi-currency report compiled: {filename}")
@@ -201,3 +196,14 @@ if __name__ == "__main__":
             
         print("\n📅 Optional Details:")
         start_date_input = input("📅 Start Date (YYYY-MM-DD): ").strip()
+        end_date_input = input("📅 End Date (YYYY-MM-DD): ").strip()
+        cargo_value_input = input("💰 Cargo Value: ").strip()
+        target_currency_input = input("💱 Currency (USD or EUR): ").strip().upper()
+
+    report_file = advanced_freight_scraper(
+        origin_input, dest_input, weight_input, volume_input, ship_type, 
+        count_20ft_input, count_40ft_input, start_date_input, end_date_input, 
+        cargo_value_input, target_currency_input
+    )
+    
+    if report_file:
