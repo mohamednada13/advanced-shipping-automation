@@ -6,9 +6,13 @@ import pandas as pd
 from playwright.sync_api import sync_playwright
 from email_sender import send_shipping_email
 
-def advanced_freight_scraper(origin, destination, weight, volume, shipment_type, container_size, start_date, end_date, cargo_value):
-    print(f"\n⏳ Activating Enterprise Cloud Logistics Engine for Route: {origin} ➡️ {destination}...")
-    print(f"📅 Date Range Window: {start_date} to {end_date} | Cargo Value: ${cargo_value}")
+def advanced_freight_scraper(origin, destination, weight, volume, shipment_type, container_size, start_date, end_date, cargo_value, target_currency):
+    print(f"\n⏳ Activating Enterprise Financial Logistics Engine for Route: {origin} ➡️ {destination}...")
+    print(f"📅 Window: {start_date} to {end_date} | Cargo Value: {cargo_value} | Currency View: {target_currency}")
+    
+    # معامل تحويل العملة المحدث والثابت (1 يورو = 1.10 دولار)
+    fx_rate = 1.10  
+    currency_symbol = "€" if target_currency == "EUR" else "$"
     
     carriers_pool = []
     prices_pool = []
@@ -25,22 +29,19 @@ def advanced_freight_scraper(origin, destination, weight, volume, shipment_type,
         w_num, v_num, val_num = 100, 1, 0
 
     is_ocean_port = len(origin) == 5 or len(destination) == 5
-    
-    # --- النقطة الثالثة: محاكاة تكرار البحث عبر النطاق الزمني لزيادة وتوسيع النتائج ---
-    # نقوم بعمل حلقة تكرارية (Loop) لمحاكاة فحص 3 فترات مختلفة داخل النطاق الزمني لتوسيع خيارات شركات الشحن
     search_cycles = 3 if (start_date and end_date) else 1
     
     for cycle in range(search_cycles):
-        # خطوط شحن مختلفة تظهر بناءً على تغير مواعيد الرحلات وجدول السفن والطائرات
-        if shipment_type == "1":  # طرود أو بالتات مجزأة
+        if shipment_type == "1":  
             if is_ocean_port:
                 base_carriers = ["DSV Logistics", "Kuehne + Nagel", "DB Schenker", "DHL Forwarding", "Schenker Ocean", "Agility Logistics", "FedEx Trade Networks"]
                 random.shuffle(base_carriers)
-                carriers = base_carriers[:4 + cycle] # توسيع تدريجي للأسطر
+                carriers = base_carriers[:4 + cycle]
                 modes = ["Ocean Freight (LCL)"] * len(carriers)
                 
                 chargeable_volume = max(v_num, w_num / 1000)
-                base_rate = random.randint(45, 65) + (cycle * 5) # تفاوت الأسعار حسب التاريخ
+                base_rate = random.randint(45, 65) + (cycle * 5)
+                # احتساب أسعار الشحن الأساسية بالدولار
                 prices_raw = [chargeable_volume * (base_rate + i * 12) + 90 for i in range(len(carriers))]
                 transit_times = [f"{10 + cycle}-{12 + i} Days" for i in range(len(carriers))]
             else:
@@ -50,12 +51,11 @@ def advanced_freight_scraper(origin, destination, weight, volume, shipment_type,
                 modes = ["Air Freight"] * len(carriers)
                 
                 chargeable_weight = max(w_num, v_num * 167)
-                # حساب زيادة سعر الذروة الجوية (Peak Season Surcharge) إذا تم تحديد نطاق زمني في فترات الضغط
                 peak_factor = 1.25 if cycle > 0 else 1.0
                 base_rate = round(random.uniform(1.8, 2.5) * peak_factor, 2)
                 prices_raw = [chargeable_weight * (base_rate + i * 0.35) + 120 for i in range(len(carriers))]
                 transit_times = [f"{1 + cycle}-{2 + i} Days" for i in range(len(carriers))]
-        else:  # شحن حاويات كاملة FCL
+        else:  
             base_carriers = ["Maersk Line", "CMA CGM", "MSC Shipping", "Hapag-Lloyd", "ONE Line", "COSCO Shipping", "Evergreen Marine"]
             random.shuffle(base_carriers)
             carriers = base_carriers[:4 + cycle]
@@ -68,25 +68,33 @@ def advanced_freight_scraper(origin, destination, weight, volume, shipment_type,
             prices_raw = [base_container_price + i * 180 for i in range(len(carriers))]
             transit_times = [f"{11 + cycle}-{15 + i} Days" for i in range(len(carriers))]
 
-        # --- النقطة الثانية: حساب قيمة التأمين الدولي المعتمد (Cargo Insurance Formula) ---
-        # وثيقة التأمين القياسية تحسب على أساس معادلة CIF + 10% بنسبة متوسطة 0.3% من إجمالي القيمة، وبحد أدنى 50 دولار
+        # --- الذكاء المالي: توحيد العملة لأسعار الشحن والتأمين وقيمة البضاعة ---
         for p_raw in prices_raw:
-            cif_value = val_num + p_raw
-            calculated_insurance = round((cif_value * 1.10) * 0.003, 2)
-            final_insurance = max(50.0, calculated_insurance) if val_num > 0 else 0.0
-            insurance_pool.append(f"${final_insurance}" if final_insurance > 0 else "$0.00 (No Value Declared)")
-            prices_pool.append(f"${round(p_raw, 2)}")
+            # حساب التأمين الأساسي بـ USD
+            cif_value_usd = val_num + p_raw
+            calculated_insurance_usd = (cif_value_usd * 1.10) * 0.003
+            final_insurance_usd = max(50.0, calculated_insurance_usd) if val_num > 0 else 0.0
+            
+            # إذا طلب المستخدم التقرير باليورو، نقوم بقسمة القيم على معامل الصرف لتحويلها فوراً من USD إلى EUR
+            if target_currency == "EUR":
+                p_final = round(p_raw / fx_rate, 2)
+                ins_final = round(final_insurance_usd / fx_rate, 2)
+            else:
+                p_final = round(p_raw, 2)
+                ins_final = round(final_insurance_usd, 2)
+
+            prices_pool.append(f"{currency_symbol}{p_final}")
+            insurance_pool.append(f"{currency_symbol}{ins_final}" if ins_final > 0 else f"{currency_symbol}0.00 (No Value)")
 
         carriers_pool.extend(carriers)
         modes_pool.extend(modes)
         transit_pool.extend(transit_times)
         dates_pool.extend([f"Window Cycle {cycle + 1}"] * len(carriers))
 
-    # تجهيز مصفوفة البيانات الضخمة الممتدة لأكثر من 12 إلى 18 سطر مقارنة حية
     df_data = {
         "Carrier / Line Name": carriers_pool,
-        "Freight Rate Cost": prices_pool,
-        "Cargo Insurance Cost": insurance_pool, # العمود التجاري الجديد المبهر للعملاء
+        f"Freight Cost ({target_currency})": prices_pool,
+        f"Cargo Insurance ({target_currency})": insurance_pool,
         "Transit Duration": transit_pool,
         "Shipping Mode": modes_pool,
         "Origin Code": [origin] * len(carriers_pool),
@@ -101,66 +109,53 @@ def advanced_freight_scraper(origin, destination, weight, volume, shipment_type,
         size_label = "20FT Standard" if container_size == "1" else "40FT High Cube"
         df_data["Container Size"] = [size_label] * len(carriers_pool)
 
-    # توليد ملف الإكسيل النهائي النظيف
-    df = pd.DataFrame(df_data).drop_duplicates(subset=["Carrier / Line Name", "Freight Rate Cost"])
-    filename = f"freight_report_{origin}_to_{destination}.xlsx"
+    df = pd.DataFrame(df_data).drop_duplicates(subset=["Carrier / Line Name", f"Freight Cost ({target_currency})"])
+    filename = f"freight_report_{origin}_to_{destination}_{target_currency}.xlsx"
     df.to_excel(filename, index=False)
-    print(f"✅ Advanced Multi-Schedule rate report compiled successfully: {filename}")
+    print(f"✅ Advanced Multi-Currency rate report compiled successfully: {filename}")
     return filename
 
 if __name__ == "__main__":
-    # المحافظة الصارمة الكاملة على هيكل مدخلات الـ CLI والسحاب بدون أي تغييرات مدمرة لـ GitHub Actions
     if len(sys.argv) > 1:
         print("🤖 Running in Automation Mode (GitHub Actions Cloud UI)...")
-        ship_type       = sys.argv[1].strip()
-        origin_input    = sys.argv[2].strip().upper()
-        dest_input      = sys.argv[3].strip().upper()
-        weight_input    = sys.argv[4].strip()
-        volume_input    = sys.argv[5].strip()
-        container_input = sys.argv[6].strip()
-        # استقبال المتغيرات السحابية الإضافية الجديدة من الـ Workflow
+        ship_type        = sys.argv[1].strip()
+        origin_input     = sys.argv[2].strip().upper()
+        dest_input       = sys.argv[3].strip().upper()
+        weight_input     = sys.argv[4].strip()
+        volume_input     = sys.argv[5].strip()
+        container_input  = sys.argv[6].strip()
         start_date_input = sys.argv[7].strip() if len(sys.argv) > 7 else "2026-09-01"
         end_date_input   = sys.argv[8].strip() if len(sys.argv) > 8 else "2026-09-15"
         cargo_value_input = sys.argv[9].strip() if len(sys.argv) > 9 else "0"
+        target_currency_input = sys.argv[10].strip().upper() if len(sys.argv) > 10 else "USD" # استقبال خيار العملة السحابي
     else:
-        # التشغيل المحلى العادي في تيرمينال Arch Linux الخاص بك
-        print("Select Shipment Type:")
-        print("1) Loose Cargo / Air Parcels / Pallets (LCL/Air)")
-        print("2) Full Container Load (FCL - Ocean)")
-        ship_type = input("👉 Enter choice (1 or 2): ").strip()
-
-        print("\n💡 Tip: Use 3-letter codes for Airports (CAI) & 5-letter codes for Ports (ITGOA)")
-        origin_input = input("📍 Enter Origin Code: ").strip().upper()
-        dest_input = input("🏁 Enter Destination Code: ").strip().upper()
-
+        print("Select Shipment Type (1: LCL/Air, 2: FCL):")
+        ship_type = input("👉 Choice: ").strip()
+        origin_input = input("📍 Origin Code: ").strip().upper()
+        dest_input = input("🏁 Destination Code: ").strip().upper()
         weight_input, volume_input, container_input = "", "", ""
-
         if ship_type == "1":
-            weight_input = input("⚖️ Enter Gross Weight in KG: ").strip()
-            volume_input = input("📦 Enter Total Volume in CBM: ").strip()
+            weight_input = input("⚖️ Weight KG: ").strip()
+            volume_input = input("📦 Volume CBM: ").strip()
         else:
-            print("\nSelect Container Size (1: 20FT, 2: 40HC):")
-            container_input = input("👉 Enter choice: ").strip()
+            container_input = input("👉 Container Size (1: 20FT, 2: 40HC): ").strip()
             
-        print("\n📅 Optional Commercial Logistics Details (Leave blank if not needed):")
-        start_date_input = input("📅 Enter Start Date (YYYY-MM-DD): ").strip()
-        end_date_input = input("📅 Enter End Date (YYYY-MM-DD): ").strip()
-        cargo_value_input = input("💰 Enter Cargo Value in USD (For Insurance): ").strip()
+        print("\n📅 Optional Details:")
+        start_date_input = input("📅 Start Date (YYYY-MM-DD): ").strip()
+        end_date_input = input("📅 End Date (YYYY-MM-DD): ").strip()
+        cargo_value_input = input("💰 Cargo Value: ").strip()
+        target_currency_input = input("💱 Enter Report Currency (USD or EUR): ").strip().upper()
 
-    # إطلاق المحرك البرمجي المطور
     report_file = advanced_freight_scraper(
         origin_input, dest_input, weight_input, volume_input, ship_type, container_input,
-        start_date_input, end_date_input, cargo_value_input
+        start_date_input, end_date_input, cargo_value_input, target_currency_input
     )
     
     if report_file:
-        # إرسال ملف المرفقات بنجاح لبريدك
         send_shipping_email(report_file, origin_input, dest_input)
-        
-        # التدمير الذاتي التلقائي للملف لمنع تراكم المخلفات والإكسيلات المؤقتة على السيرفر وجيت هاب
-        print(f"🧹 Performing server cleanup. Deleting temporary file: {report_file}")
+        print(f"🧹 Performing server cleanup: {report_file}")
         try:
             os.remove(report_file)
-            print("✨ Temporary excel artifact destroyed successfully. Server is clean!")
+            print("✨ Temporary excel artifact destroyed successfully.")
         except Exception as e:
             print(f"⚠️ Cleanup note: {e}")
