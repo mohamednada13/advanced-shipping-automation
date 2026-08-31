@@ -5,7 +5,7 @@ import os
 import pandas as pd
 from playwright.sync_api import sync_playwright
 
-# استدعاء دالة الإرسال من الموديول المستقل الخارجي تطبيقاً لمبدأ الـ Decoupling
+# استدعاء دالة الإرسال من الموديول المستقل الخارجي
 from email_sender import send_shipping_email
 
 def advanced_freight_scraper(origin, destination, weight, volume, shipment_type, count_20ft, count_40ft, start_date, end_date, cargo_value, target_currency):
@@ -73,7 +73,7 @@ def advanced_freight_scraper(origin, destination, weight, volume, shipment_type,
                     prices_pool.append(p_raw)
                     rate_20ft_pool.append(0.0)
                     rate_40ft_pool.append(0.0)
-                    rate_lcl_pool.append(round(single_air_usd, 2))
+                    rate_lcl.append(round(single_air_usd, 2))
                     
                 transit_times = [f"{1 + cycle}-{2 + i} Days" for i in range(len(carriers))]
                 
