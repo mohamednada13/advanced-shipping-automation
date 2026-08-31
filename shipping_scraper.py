@@ -7,7 +7,7 @@ from playwright.sync_api import sync_playwright
 from email_sender import send_shipping_email
 
 def advanced_freight_scraper(origin, destination, weight, volume, shipment_type, count_20ft, count_40ft, start_date, end_date, cargo_value, target_currency):
-    print(f"\n⏳ Activating Enterprise Hybrid Logistics Engine for Route: {origin} ➡️ {destination}...")
+    print(f"\n⏳ Activating Enterprise Financial Logistics Engine for Route: {origin} ➡️ {destination}...")
     print(f"📅 Window: {start_date} to {end_date} | Cargo Value: {cargo_value} | Currency View: {target_currency}")
     
     fx_rate = 1.10  
@@ -33,7 +33,7 @@ def advanced_freight_scraper(origin, destination, weight, volume, shipment_type,
     search_cycles = 3 if (start_date and end_date) else 1
     
     for cycle in range(search_cycles):
-        if shipment_type == "1":  # طرود أو بالتات مجزأة فقط LCL / Air
+        if shipment_type == "1":  
             if is_ocean_port:
                 base_carriers = ["DSV Logistics", "Kuehne + Nagel", "DB Schenker", "DHL Forwarding", "Schenker Ocean", "Agility Logistics"]
                 random.shuffle(base_carriers)
@@ -56,7 +56,7 @@ def advanced_freight_scraper(origin, destination, weight, volume, shipment_type,
                 prices_raw = [chargeable_weight * (base_rate + i * 0.35) + 120 for i in range(len(carriers))]
                 transit_times = [f"{1 + cycle}-{2 + i} Days" for i in range(len(carriers))]
                 
-        else:  # شحن الحاويات والميكس المختلط (FCL & Hybrid)
+        else:  
             base_carriers = ["Maersk Line", "CMA CGM", "MSC Shipping", "Hapag-Lloyd", "ONE Line", "COSCO Shipping", "Evergreen Marine"]
             random.shuffle(base_carriers)
             carriers = base_carriers[:4 + cycle]
@@ -65,23 +65,19 @@ def advanced_freight_scraper(origin, destination, weight, volume, shipment_type,
             
             prices_raw = []
             for i in range(len(carriers)):
-                # احتساب أسعار الحاويات الـ 20 والـ 40 والـ LCL الزائد معاً
                 price_20ft = (random.randint(1400, 1800) + (cycle * 100)) * c20
                 price_40ft = (random.randint(2400, 2900) + (cycle * 150)) * c40
                 
-                # حساب الجزء المجزأ إذا كان هناك بالتات زائدة مع الحاويات
                 price_lcl = 0
                 if v_num > 0 or w_num > 0:
                     chargeable_volume = max(v_num, w_num / 1000)
                     price_lcl = chargeable_volume * (random.randint(45, 65) + i * 10) + 50
                     
                 total_freight_usd = price_20ft + price_40ft + price_lcl
-                # تأمين حد أدنى منطقي لو كانت كل الخانات بأصفار
                 if total_freight_usd == 0:
                     total_freight_usd = random.randint(1400, 1800) + i * 150
                 prices_raw.append(total_freight_usd)
 
-        # توحيد العملة وحساب التأمين
         for p_raw in prices_raw:
             cif_value_usd = val_num + p_raw
             calculated_insurance_usd = (cif_value_usd * 1.10) * 0.003
@@ -97,6 +93,12 @@ def advanced_freight_scraper(origin, destination, weight, volume, shipment_type,
             prices_pool.append(f"{currency_symbol}{p_final}")
             insurance_pool.append(f"{currency_symbol}{ins_final}" if ins_final > 0 else f"{currency_symbol}0.00 (No Value)")
 
+        carriers_pool.extend(carriers)
+        modes_pool.extend(modes)
+        transit_pool.extend(transit_times)
+        dates_pool.extend([f"Window Cycle {cycle + 1}"] * len(carriers))
+
+    # بناء القاموس الأساسي وضمان تساوق الأطوال الابتدائية
     df_data = {
         "Carrier / Line Name": carriers_pool,
         f"Freight Cost ({target_currency})": prices_pool,
@@ -108,13 +110,17 @@ def advanced_freight_scraper(origin, destination, weight, volume, shipment_type,
         "Schedules / Date Window": dates_pool
     }
     
-    # تفصيل محتويات الشحنة داخل ملف الإكسيل بشكل احترافي ومبهر
-    df_data["Qty 20FT Containers"] = [c20] * len(carriers_pool)
-    df_data["Qty 40FT Containers"] = [c40] * len(carriers_pool)
-    df_data["Loose Weight (KG)"] = [weight if weight else "0"] * len(carriers_pool)
-    df_data["Loose Volume (CBM)"] = [volume if volume else "0"] * len(carriers_pool)
-
+    # تحويل القاموس إلى DataFrame أولاً وتنظيف التكرارات فوراً بحسم
     df = pd.DataFrame(df_data).drop_duplicates(subset=["Carrier / Line Name", f"Freight Cost ({target_currency})"])
+    
+    # --- التصحيح الحاسم: حساب الطول الفعلي الحركي للجدول بعد التنظيف لحقن بقية البيانات بأمان تام ---
+    final_length = len(df)
+    
+    df["Qty 20FT Containers"] = [c20] * final_length
+    df["Qty 40FT Containers"] = [c40] * final_length
+    df["Loose Weight (KG)"] = [weight if weight else "0"] * final_length
+    df["Loose Volume (CBM)"] = [volume if volume else "0"] * final_length
+
     filename = f"freight_report_{origin}_to_{destination}_{target_currency}.xlsx"
     df.to_excel(filename, index=False)
     print(f"✅ Enterprise Multi-Modal report compiled: {filename}")
@@ -122,7 +128,6 @@ def advanced_freight_scraper(origin, destination, weight, volume, shipment_type,
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
-        print("🤖 Running in Automation Mode (GitHub Actions Cloud UI)...")
         ship_type        = sys.argv[1].strip()
         origin_input     = sys.argv[2].strip().upper()
         dest_input       = sys.argv[3].strip().upper()
@@ -135,7 +140,6 @@ if __name__ == "__main__":
         cargo_value_input = sys.argv[10].strip() if len(sys.argv) > 10 else "0"
         target_currency_input = sys.argv[11].strip().upper() if len(sys.argv) > 11 else "USD"
     else:
-        # التشغيل المحلى العادي في تيرمينال Arch Linux
         print("Select Shipment Type (1: LCL/Air, 2: FCL & Hybrid Mix):")
         ship_type = input("👉 Choice: ").strip()
         origin_input = input("📍 Origin Code: ").strip().upper()
