@@ -14,11 +14,11 @@ on:
         description: "Destination Code (e.g., EGALY, DXB)"
         required: true
       weight:
-        description: "Loose Weight in KG"
+        description: "Total Weight in KG (Actual Gross Weight)"
         required: false
         default: "0"
       volume:
-        description: "Loose Volume in CBM"
+        description: "Ziyada Loose Volume in CBM (If Hybrid Mix, else 0)"
         required: false
         default: "0"
       count_20ft:
@@ -38,7 +38,7 @@ on:
         required: false
         default: "2026-09-15"
       cargo_value:
-        description: "Cargo Value in USD/EUR base"
+        description: "Cargo Value in USD/EUR base (For Insurance)"
         required: false
         default: "0"
       target_currency:
