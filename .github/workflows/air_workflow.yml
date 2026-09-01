@@ -1,45 +1,62 @@
 name: 1. Air Freight Scraper UI
+
 on:
   workflow_dispatch:
     inputs:
       origin:
-        description: "Airport Code (e.g., CAI, DXB)"
+        description: "Airport of Departure (AOD) - مطار المغادرة (3-4 أحرف)"
         required: true
+        default: "CAI"
       destination:
-        description: "Airport Code (e.g., LHR, JFK)"
+        description: "Airport of Destination - مطار الوجهة (3-4 أحرف)"
         required: true
+        default: "LHR"
       weight:
-        description: "Total Shipment Weight in KG"
+        description: "Total Shipment Weight in KG (الوزن الفعلي)"
         required: true
         default: "100"
       volume:
-        description: "Total Volume in CBM"
+        description: "Total Volume in CBM (الحجم الحجمي التقديري)"
         required: false
         default: "1"
       start_date:
-        description: "Start Date (YYYY-MM-DD)"
+        description: "Flight Start Date (YYYY-MM-DD)"
         required: false
         default: "2026-09-01"
       end_date:
-        description: "End Date (YYYY-MM-DD)"
+        description: "Flight End Date (YYYY-MM-DD)"
         required: false
         default: "2026-09-15"
       cargo_value:
-        description: "Cargo Value (For Insurance calculation)"
+        description: "Cargo Value (قيمة البضاعة للتأمين الشامل)"
         required: false
         default: "0"
       target_currency:
         description: "Report Currency Output"
         required: true
         type: choice
-        options: ["EUR", "USD"]
+        options:
+          - "EUR"
+          - "USD"
         default: "EUR"
+
 jobs:
   run-air-scraper:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-python@v4
-      with: {python-version: "3.10"}
-    - run: pip install playwright pandas openpyxl && playwright install chromium
-    - run: python shipping_scraper.py "1" "${{ github.event.inputs.origin }}" "${{ github.event.inputs.destination }}" "${{ github.event.inputs.weight }}" "${{ github.event.inputs.volume }}" "0" "0" "${{ github.event.inputs.start_date }}" "${{ github.event.inputs.end_date }}" "${{ github.event.inputs.cargo_value }}" "${{ github.event.inputs.target_currency }}"
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.10"
+
+    - name: Install Dependencies
+      run: |
+        pip install playwright pandas openpyxl
+        playwright install chromium
+
+    - name: Execute Air Scraper Engine
+      run: |
+        python shipping_scraper.py "1" "${{ github.event.inputs.origin }}" "${{ github.event.inputs.destination }}" "${{ github.event.inputs.weight }}" "${{ github.event.inputs.volume }}" "0" "0" "${{ github.event.inputs.start_date }}" "${{ github.event.inputs.end_date }}" "${{ github.event.inputs.cargo_value }}" "${{ github.event.inputs.target_currency }}"
