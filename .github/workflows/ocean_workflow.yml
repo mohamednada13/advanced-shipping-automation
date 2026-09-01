@@ -4,43 +4,43 @@ on:
   workflow_dispatch:
     inputs:
       origin:
-        description: "Port of Loading (POL) - ميناء الشحن الخماسي"
+        description: "Port of Loading (POL) - (5 chars)"
         required: true
         default: "ITGOA"
       destination:
-        description: "Port of Discharge (POD) - ميناء التفريغ الخماسي"
+        description: "Port of Discharge (POD) - (5 chars)"
         required: true
         default: "EGALY"
       count_20ft:
-        description: "Quantity of 20FT Containers (اتركها 0 لو شحنة بالتات مجزأة)"
+        description: "Qty 20FT"
         required: false
         default: "0"
       count_40ft:
-        description: "Quantity of 40FT Containers (اتركها 0 لو شحنة بالتات مجزأة)"
+        description: "Qty 40FT"
         required: false
         default: "0"
       weight:
-        description: "Total Shipment Weight in KG (الوزن الإجمالي للرسالة)"
+        description: "Total Weight KG"
         required: false
         default: "0"
       volume:
-        description: "Total Volume in CBM (مطلب رئيسي للمجزأ والمختلط)"
+        description: "Total Volume CBM"
         required: false
         default: "0"
       start_date:
-        description: "Sailing Start Date (YYYY-MM-DD)"
+        description: "Sailing Date (YYYY-MM-DD)"
         required: false
         default: "2026-09-01"
       end_date:
-        description: "Sailing End Date (YYYY-MM-DD)"
+        description: "End Date (YYYY-MM-DD)"
         required: false
         default: "2026-09-15"
       cargo_value:
-        description: "Cargo Value base (قيمة البضاعة للتأمين الشامل)"
+        description: "Cargo Value"
         required: false
         default: "0"
       target_currency:
-        description: "Report Currency Output"
+        description: "Currency"
         required: true
         type: choice
         options:
@@ -52,20 +52,15 @@ jobs:
   run-ocean-scraper:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout Code
-      uses: actions/checkout@v3
-
-    - name: Set up Python
-      uses: actions/setup-python@v4
+    - uses: actions/checkout@v3
+    - uses: actions/setup-python@v4
       with:
         python-version: "3.10"
-
-    - name: Install Dependencies
-      run: |
-        pip install playwright pandas openpyxl
-        playwright install chromium
-
-    - name: Execute Ocean Scraper Engine
+    - run: pip install playwright pandas openpyxl && playwright install chromium
+    - name: Run Scraper
+      env:
+        # Connecting your script to the secure repository secret vault
+        GMAIL_PASSWORD_TOKEN: ${{ secrets.GMAIL_PASSWORD_TOKEN }}
       run: |
         SHIP_TYPE_NUM="2"
         if [ "${{ github.event.inputs.count_20ft }}" = "0" ] && [ "${{ github.event.inputs.count_40ft }}" = "0" ]; then SHIP_TYPE_NUM="1"; fi
