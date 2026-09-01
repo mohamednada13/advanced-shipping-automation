@@ -50,22 +50,30 @@ def send_shipping_email(excel_filepath, origin, destination):
         print(f"❌ Email transmission layer error: {e}")
 
 if __name__ == "__main__":
-    # Safe check: if we are running on GitHub Actions, args will always be greater than 1
-    if len(sys.argv) > 1:
-        # Dynamically map positional arguments with safe list length safeguards
-        ship_type = sys.argv[1].strip() if len(sys.argv) > 1 else "1"
-        origin_input = sys.argv[2].upper().strip() if len(sys.argv) > 2 else "CAI"
-        dest_input = sys.argv[3].upper().strip() if len(sys.argv) > 3 else "LHR"
-        weight_input = sys.argv[4].strip() if len(sys.argv) > 4 else "100"
-        volume_input = sys.argv[5].strip() if len(sys.argv) > 5 else "1"
-        count_20ft_input = sys.argv[6].strip() if len(sys.argv) > 6 else "0"
-        count_40ft_input = sys.argv[7].strip() if len(sys.argv) > 7 else "0"
-        start_date_input = sys.argv[8].strip() if len(sys.argv) > 8 else "2026-09-01"
-        end_date_input = sys.argv[9].strip() if len(sys.argv) > 9 else "2026-09-15"
-        cargo_value_input = sys.argv[10].strip() if len(sys.argv) > 10 else "0"
-        target_currency_input = sys.argv[11].upper().strip() if len(sys.argv) > 11 else "USD"
-    else:
-        sys.exit("CLI interactive mode disabled on Cloud Run environment.")
+    # Robust safe fallbacks to process direct system argument offsets securely
+    ship_type = "1"
+    origin_input = "CAI"
+    dest_input = "LHR"
+    weight_input = "100"
+    volume_input = "1"
+    count_20ft_input = "0"
+    count_40ft_input = "0"
+    start_date_input = "2026-09-01"
+    end_date_input = "2026-09-15"
+    cargo_value_input = "0"
+    target_currency_input = "EUR"
+
+    if len(sys.argv) > 1: ship_type = str(sys.argv[1]).strip()
+    if len(sys.argv) > 2: origin_input = str(sys.argv[2]).upper().strip()
+    if len(sys.argv) > 3: dest_input = str(sys.argv[3]).upper().strip()
+    if len(sys.argv) > 4: weight_input = str(sys.argv[4]).strip()
+    if len(sys.argv) > 5: volume_input = str(sys.argv[5]).strip()
+    if len(sys.argv) > 6: count_20ft_input = str(sys.argv[6]).strip()
+    if len(sys.argv) > 7: count_40ft_input = str(sys.argv[7]).strip()
+    if len(sys.argv) > 8: start_date_input = str(sys.argv[8]).strip()
+    if len(sys.argv) > 9: end_date_input = str(sys.argv[9]).strip()
+    if len(sys.argv) > 10: cargo_value_input = str(sys.argv[10]).strip()
+    if len(sys.argv) > 11: target_currency_input = str(sys.argv[11]).upper().strip()
 
     # --- 🛡️ Graceful Exit Pre-Validation Guardrails ---
     if ship_type == "1":
