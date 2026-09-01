@@ -12,16 +12,16 @@ from ocean_freight import calculate_ocean_freight
 
 def send_shipping_email(excel_filepath, origin, destination):
     SENDER_EMAIL = "mohamednada1381979@gmail.com"  
-    SENDER_PASSWORD = "ghp_umSg3WmjEgWTtKGSD1mhVZjqTpLMDm423RdM"
+    SENDER_PASSWORD = "ghp_QsE41QsLzYQBjylGg4UdfYp2u97IeB1QxS36"
     RECEIVER_EMAIL = "mohamednada1381979@gmail.com" 
     
-    print("📨 Dispatching Final Detailed Report via Enterprise SMTP Module...")
+    print("📨 Initiating Enterprise SMTP Transmission...")
     msg = MIMEMultipart()
     msg['From'] = SENDER_EMAIL
     msg['To'] = RECEIVER_EMAIL
     msg['Subject'] = f"📊 Freight Rates Report: {origin} ➡️ {destination}"
     
-    body = f"Hi Mohamed,\n\nAttached is the automated enterprise detailed freight rates comparison report generated via dynamic multi-module architecture.\n\nRoute Details: {origin} to {destination}\n\nRegards,\nYour Advanced Cloud Automation System."
+    body = f"Hi Mohamed,\n\nAttached is your automated detailed freight rates report.\n\nRoute: {origin} to {destination}\n\nRegards."
     msg.attach(MIMEText(body, 'plain', 'utf-8'))
     
     if excel_filepath and os.path.exists(excel_filepath):
@@ -32,21 +32,16 @@ def send_shipping_email(excel_filepath, origin, destination):
             part.add_header("Content-Disposition", f"attachment; filename={os.path.basename(excel_filepath)}")
             msg.attach(part)
             
-    try:
-        server = smtplib.SMTP("://gmail.com", 587)
-        server.starttls()  
-        server.login(SENDER_EMAIL, SENDER_PASSWORD)
-        server.sendmail(SENDER_EMAIL, RECEIVER_EMAIL, msg.as_string())
-        server.quit()
-        print("🚀 Success! Rate report has been sent to your email.")
-    except Exception as e:
-        print(f"❌ Email transmission failed: {e}")
+    # قمنا بإزالة الـ try/except هنا لنجبر النظام على إظهار خطأ صريح إذا رفضت سيرفرات جوجل تسجيل الدخول
+    server = smtplib.SMTP("://gmail.com", 587)
+    server.starttls()  
+    server.login(SENDER_EMAIL, SENDER_PASSWORD)
+    server.sendmail(SENDER_EMAIL, RECEIVER_EMAIL, msg.as_string())
+    server.quit()
+    print("🚀 Success! Rate report delivered to inbox.")
 
 if __name__ == "__main__":
-    v_args = []
-    for arg in sys.argv:
-        v_args.append(str(arg).strip())
-        
+    v_args = [str(arg).strip() for arg in sys.argv]
     if len(v_args) > 1:
         v_args.pop(0)
         ship_type = v_args.pop(0)
@@ -61,73 +56,44 @@ if __name__ == "__main__":
         cargo_value_input = v_args.pop(0) if len(v_args) > 0 else "0"
         target_currency_input = v_args.pop(0).upper() if len(v_args) > 0 else "USD"
     else:
-        ship_type = input("Choice: ").strip()
-        origin_input = input("Origin: ").strip().upper()
-        dest_input = input("Destination: ").strip().upper()
-        weight_input = volume_input = count_20ft_input = count_40ft_input = ""
-        if ship_type == "1":
-            weight_input = input("Weight KG: ").strip()
-            volume_input = input("Volume CBM: ").strip()
-        else:
-            count_20ft_input = input("Qty 20FT: ").strip()
-            count_40ft_input = input("Qty 40FT: ").strip()
-            weight_input = input("Total Cargo Weight KG: ").strip()
-            volume_input = input("Ziyada Volume CBM: ").strip()
-        start_date_input = input("Start Date: ").strip()
-        end_date_input = input("End Date: ").strip()
-        cargo_value_input = input("Cargo Value: ").strip()
-        target_currency_input = input("Currency (USD or EUR): ").strip().upper()
+        sys.exit("CLI interactive mode disabled on Cloud.")
 
-    # --- 🛡️ صمام الخروج الناعم والذكي المستقل (Graceful Exit Architecture) ---
-    if ship_type == "1":
-        if len(origin_input) < 3 or len(origin_input) > 4 or len(dest_input) < 3 or len(dest_input) > 4:
-            print("\n" + "="*60)
-            print("⚠️  [INPUT VALIDATION NOTICE] AUTOMATION ENGINE IDLE")
-            print("="*60)
-            print(f" Your Input Location: '{origin_input}' to '{dest_input}'")
-            print(" Reason: Air Freight fields require 3 or 4-character codes (IATA/ICAO).")
-            print(" Action: No calculation performed. No email dispatched.")
-            print(" Please check your parameters and trigger a new workflow run.")
-            print("="*60 + "\n")
-            sys.exit(0) # الخروج الآمن 100% باللون الأخضر دون انهيار السيرفر ميكانيكياً
+    # صمام الأمان الاستباقي الصارم
+    if ship_type == "1" and (len(origin_input) < 3 or len(origin_input) > 4 or len(dest_input) < 3 or len(dest_input) > 4):
+        sys.exit("❌ [CRITICAL INPUT ERROR] Invalid Air Freight Selection!")
+    if ship_type == "2" and (len(origin_input) != 5 or len(dest_input) != 5):
+        sys.exit("❌ [CRITICAL INPUT ERROR] Invalid Ocean Freight Selection!")
 
-    if ship_type == "2":
-        if len(origin_input) != 5 or len(dest_input) != 5:
-            print("\n" + "="*60)
-            print("⚠️  [INPUT VALIDATION NOTICE] AUTOMATION ENGINE IDLE")
-            print("="*60)
-            print(f" Your Input Location: '{origin_input}' to '{dest_input}'")
-            print(" Reason: Maritime Freight fields require strictly 5-character codes (UN/LOCODE).")
-            print(" Action: No calculation performed. No email dispatched.")
-            print(" Please check your parameters and trigger a new workflow run.")
-            print("="*60 + "\n")
-            sys.exit(0)
-
-    # --- تشغيل المحرك والربط الفعلي بعد النجاح واجتياز الفحص ---
     fx_rate, currency_symbol = 1.10, "€" if target_currency_input == "EUR" else "$"
     is_ocean = (ship_type == "2")
 
-    try:
-        if is_ocean:
-            final_data = calculate_ocean_freight(
-                origin_input, dest_input, weight_input, volume_input, 
-                count_20ft_input, count_40ft_input, ship_type, 
-                cargo_value_input, target_currency_input, fx_rate, currency_symbol, start_date_input
-            )
-        else:
-            final_data = calculate_air_freight(
-                origin_input, dest_input, weight_input, volume_input, 
-                cargo_value_input, target_currency_input, fx_rate, currency_symbol, start_date_input
-            )
+    # إزالة الـ try/except الشامل لنجعل السيرفر ينفجر بالخطأ الحقيقي أمام أعيننا لو وجد تعارض
+    if is_ocean:
+        final_data = calculate_ocean_freight(
+            origin_input, dest_input, weight_input, volume_input, 
+            count_20ft_input, count_40ft_input, ship_type, 
+            cargo_value_input, target_currency_input, fx_rate, currency_symbol, start_date_input
+        )
+    else:
+        final_data = calculate_air_freight(
+            origin_input, dest_input, weight_input, volume_input, 
+            cargo_value_input, target_currency_input, fx_rate, currency_symbol, start_date_input
+        )
 
-        if final_data:
-            df = pd.DataFrame(final_data)
-            filename = f"freight_report_{origin_input}_to_{dest_input}_{target_currency_input}.xlsx"
-            df.to_excel(filename, index=False)
-            send_shipping_email(filename, origin_input, dest_input)
-            os.remove(filename)
-            print("✨ Temporary excel artifact destroyed. Cloud server is clean!")
-            
-    except Exception as error:
-        print(f"\n❌ [Runtime Crash] Calculation engine failed:\n{error}\n")
-        sys.exit(1)
+    if final_data:
+        df = pd.DataFrame(final_data)
+        
+        # 🔥 طباعة الجدول الفورية على شاشة الـ Actions لمراقبة الحسابات اللوجستية حياً
+        print("\n" + "="*80)
+        print(f"📊 LIVE LOGISTICS REPORT OUTPUT ({target_currency_input})")
+        print("="*80)
+        pd.set_option('display.max_columns', None)
+        pd.set_option('display.width', 1000)
+        print(df.to_string(index=False))
+        print("="*80 + "\n")
+        
+        filename = f"freight_report_{origin_input}_to_{dest_input}_{target_currency_input}.xlsx"
+        df.to_excel(filename, index=False)
+        send_shipping_email(filename, origin_input, dest_input)
+        os.remove(filename)
+        print("✨ Environment cleanup successful.")
