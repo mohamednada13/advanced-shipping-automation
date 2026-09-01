@@ -7,7 +7,6 @@ from email.mime.base import MIMEBase
 from email import encoders
 import pandas as pd
 
-# استدعاء المحركات الجوية والبحرية المنفصلة تلبية للشروط الهندسية واللوجستية الاحترافية
 from air_freight import calculate_air_freight
 from ocean_freight import calculate_ocean_freight
 
@@ -51,8 +50,8 @@ if __name__ == "__main__":
     if len(v_args) > 1:
         v_args.pop(0)
         ship_type = v_args.pop(0)
-        origin_input = v_args.pop(0).upper()
-        dest_input = v_args.pop(0).upper()
+        origin_input = v_args.pop(0).upper().strip()
+        dest_input = v_args.pop(0).upper().strip()
         weight_input = v_args.pop(0)
         volume_input = v_args.pop(0)
         count_20ft_input = v_args.pop(0)
@@ -80,12 +79,20 @@ if __name__ == "__main__":
         cargo_value_input = input("Cargo Value: ").strip()
         target_currency_input = input("Currency (USD or EUR): ").strip().upper()
 
-    fx_rate, currency_symbol = 1.10, "€" if target_currency_input == "EUR" else "$"
-    
-    # التوجيه الذكي الصارم بناءً على فحص طول الأكواد الجغرافية للفصل التام
-    is_ocean = len(origin_input) == 5 or len(dest_input) == 5
-    
+    # --- 🛠️ صمام الأمان الاستباقي الصارم والفوري قبل استدعاء أي كود داخلي ---
     try:
+        # 1. فحص الشحن الجوي الصارم (الخيار رقم 1 في الواجهة)
+        if ship_type == "1" and (len(origin_input) < 3 or len(origin_input) > 4 or len(dest_input) < 3 or len(dest_input) > 4):
+            raise ValueError("⚠️ [INPUT WARNING] Invalid Air Freight Input! Airport codes must be strictly 3 or 4 characters long (IATA/ICAO codes).")
+            
+        # 2. فحص الشحن البحري الصارم (الخيار رقم 2 في الواجهة)
+        if ship_type == "2" and (len(origin_input) != 5 or len(dest_input) != 5):
+            raise ValueError("⚠️ [INPUT WARNING] Invalid Ocean Freight Input! Maritime port codes must be strictly 5 characters long (UN/LOCODE standard).")
+
+        # التوجيه الحركي للمحركات بعد النجاح التام في الفحص الاستباقي
+        fx_rate, currency_symbol = 1.10, "€" if target_currency_input == "EUR" else "$"
+        is_ocean = (ship_type == "2")
+
         if is_ocean:
             final_data = calculate_ocean_freight(
                 origin_input, dest_input, weight_input, volume_input, 
@@ -102,14 +109,10 @@ if __name__ == "__main__":
             df = pd.DataFrame(final_data)
             filename = f"freight_report_{origin_input}_to_{dest_input}_{target_currency_input}.xlsx"
             df.to_excel(filename, index=False)
-            
-            # استدعاء دالة الإرسال الآمن عبر البريد الإلكتروني
             send_shipping_email(filename, origin_input, dest_input)
-            
-            # تدمير ملف الإكسيل المؤقت لمنع التراكم على خوادم السحاب
             os.remove(filename)
             print("✨ Temporary excel artifact destroyed. Cloud server is clean!")
             
     except Exception as error:
-        print(f"\n❌ [Validation Triggered] System stopped execution: {error}\n")
+        print(f"\n❌ [Validation Triggered] System stopped execution:\n{error}\n")
         sys.exit(1)
