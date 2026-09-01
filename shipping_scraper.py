@@ -14,13 +14,17 @@ def send_shipping_email(excel_filepath, origin, destination):
     SENDER_EMAIL = "mohamednada1381979@gmail.com"  
     RECEIVER_EMAIL = "mohamednada1381979@gmail.com" 
     
-    # 🔐 Securely extraction of your clean app password from the vault
+    # Clean injection of your network parameters
+    SMTP_SERVER = "smtp.gmail.com"
+    SMTP_PORT = 465
+    
+    # 🔐 Safely fetching your clean app password from repository secrets
     SENDER_PASSWORD = os.environ.get("GMAIL_PASSWORD_TOKEN")
     if not SENDER_PASSWORD:
         print("⚠️ Warning: GMAIL_PASSWORD_TOKEN environment variable is missing on cloud runner.")
         return
 
-    print("📨 Opening Clean SMTP Connection to Google Servers...")
+    print(f"📨 Opening Secure SSL SMTP Connection to {SMTP_SERVER} on Port {SMTP_PORT}...")
     msg = MIMEMultipart()
     msg['From'] = SENDER_EMAIL
     msg['To'] = RECEIVER_EMAIL
@@ -38,8 +42,8 @@ def send_shipping_email(excel_filepath, origin, destination):
             msg.attach(part)
             
     try:
-        server = smtplib.SMTP("smtp.gmail.com", 465)
-        server.starttls()  
+        # Initializing the encrypted channel immediately via SMTP_SSL
+        server = smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT)
         server.login(SENDER_EMAIL, SENDER_PASSWORD)
         server.sendmail(SENDER_EMAIL, RECEIVER_EMAIL, msg.as_string())
         server.quit()
@@ -53,7 +57,7 @@ if __name__ == "__main__":
         v_args.append(str(arg).strip())
         
     if len(v_args) > 1:
-        # Correct explicitly positioned argument assignments to map strings accurately
+        # Clean parameter indexing for automated parsing
         ship_type = v_args[1]
         origin_input = v_args[2].upper().strip()
         dest_input = v_args[3].upper().strip()
