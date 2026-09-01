@@ -14,7 +14,7 @@ def send_shipping_email(excel_filepath, origin, destination):
     SENDER_EMAIL = "mohamednada1381979@gmail.com"  
     RECEIVER_EMAIL = "mohamednada1381979@gmail.com" 
     
-    # 🔐 Securely extraction of your clean 16-character app password from the vault environment
+    # 🔐 Securely extraction of your clean app password from the vault
     SENDER_PASSWORD = os.environ.get("GMAIL_PASSWORD_TOKEN")
     if not SENDER_PASSWORD:
         print("⚠️ Warning: GMAIL_PASSWORD_TOKEN environment variable is missing on cloud runner.")
@@ -53,18 +53,18 @@ if __name__ == "__main__":
         v_args.append(str(arg).strip())
         
     if len(v_args) > 1:
-        v_args.pop(0) # Remove script name entry
-        ship_type = v_args
-        origin_input = v_args.upper().strip()
-        dest_input = v_args.upper().strip()
-        weight_input = v_args
-        volume_input = v_args
-        count_20ft_input = v_args
-        count_40ft_input = v_args
-        start_date_input = v_args if len(v_args) > 7 else "2026-09-01"
-        end_date_input = v_args if len(v_args) > 8 else "2026-09-15"
-        cargo_value_input = v_args if len(v_args) > 9 else "0"
-        target_currency_input = v_args.upper() if len(v_args) > 10 else "USD"
+        # Correct explicitly positioned argument assignments to map strings accurately
+        ship_type = v_args[1]
+        origin_input = v_args[2].upper().strip()
+        dest_input = v_args[3].upper().strip()
+        weight_input = v_args[4]
+        volume_input = v_args[5]
+        count_20ft_input = v_args[6]
+        count_40ft_input = v_args[7]
+        start_date_input = v_args[8] if len(v_args) > 8 else "2026-09-01"
+        end_date_input = v_args[9] if len(v_args) > 9 else "2026-09-15"
+        cargo_value_input = v_args[10] if len(v_args) > 10 else "0"
+        target_currency_input = v_args[11].upper() if len(v_args) > 11 else "USD"
     else:
         sys.exit("CLI interactive mode disabled on Cloud Run environment.")
 
