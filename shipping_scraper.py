@@ -13,7 +13,7 @@ from ocean_freight import calculate_ocean_freight
 def send_shipping_email(excel_filepath, origin, destination):
     SENDER_EMAIL = "mohamednada1381979@gmail.com"  
     SENDER_PASSWORD = "ghp_umSg3WmjEgWTtKGSD1mhVZjqTpLMDm423RdM"
-    RECEIVER_EMAIL = "mohamednada1381979@gmail.com" 
+    RECEIVER_EMAIL = "mohamed_nada@gastec-egypt.com" 
     
     print("📨 Dispatching Final Detailed Report via Enterprise SMTP Module...")
     msg = MIMEMultipart()
