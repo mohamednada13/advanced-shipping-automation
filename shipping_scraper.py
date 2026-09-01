@@ -14,11 +14,9 @@ def send_shipping_email(excel_filepath, origin, destination):
     SENDER_EMAIL = "mohamednada1381979@gmail.com"  
     RECEIVER_EMAIL = "mohamednada1381979@gmail.com" 
     
-    # Clean injection of your network parameters
-    SMTP_SERVER = "smtp.gmail.com"
+    SMTP_SERVER = "://gmail.com"
     SMTP_PORT = 465
     
-    # 🔐 Safely fetching your clean app password from repository secrets
     SENDER_PASSWORD = os.environ.get("GMAIL_PASSWORD_TOKEN")
     if not SENDER_PASSWORD:
         print("⚠️ Warning: GMAIL_PASSWORD_TOKEN environment variable is missing on cloud runner.")
@@ -42,7 +40,6 @@ def send_shipping_email(excel_filepath, origin, destination):
             msg.attach(part)
             
     try:
-        # Initializing the encrypted channel immediately via SMTP_SSL
         server = smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT)
         server.login(SENDER_EMAIL, SENDER_PASSWORD)
         server.sendmail(SENDER_EMAIL, RECEIVER_EMAIL, msg.as_string())
@@ -52,25 +49,21 @@ def send_shipping_email(excel_filepath, origin, destination):
         print(f"❌ Email transmission layer error: {e}")
 
 if __name__ == "__main__":
-    v_args = []
-    for arg in sys.argv:
-        v_args.append(str(arg).strip())
-        
-    if len(v_args) > 1:
-        # Clean parameter indexing for automated parsing
-        ship_type = v_args[1]
-        origin_input = v_args[2].upper().strip()
-        dest_input = v_args[3].upper().strip()
-        weight_input = v_args[4]
-        volume_input = v_args[5]
-        count_20ft_input = v_args[6]
-        count_40ft_input = v_args[7]
-        start_date_input = v_args[8] if len(v_args) > 8 else "2026-09-01"
-        end_date_input = v_args[9] if len(v_args) > 9 else "2026-09-15"
-        cargo_value_input = v_args[10] if len(v_args) > 10 else "0"
-        target_currency_input = v_args[11].upper() if len(v_args) > 11 else "USD"
+    # Clean positional unpacking matching the 11 YAML workflow arguments explicitly
+    if len(sys.argv) > 11:
+        ship_type = sys.argv[1].strip()
+        origin_input = sys.argv[2].upper().strip()
+        dest_input = sys.argv[3].upper().strip()
+        weight_input = sys.argv[4].strip()
+        volume_input = sys.argv[5].strip()
+        count_20ft_input = sys.argv[6].strip()
+        count_40ft_input = sys.argv[7].strip()
+        start_date_input = sys.argv[8].strip()
+        end_date_input = sys.argv[9].strip()
+        cargo_value_input = sys.argv[10].strip()
+        target_currency_input = sys.argv[11].upper().strip()
     else:
-        sys.exit("CLI interactive mode disabled on Cloud Run environment.")
+        sys.exit("CLI interactive mode disabled on Cloud Run environment due to insufficient arguments.")
 
     # --- 🛡️ Graceful Exit Pre-Validation Guardrails ---
     if ship_type == "1":
@@ -88,7 +81,7 @@ if __name__ == "__main__":
             sys.exit(0)
 
     fx_rate, currency_symbol = 1.10, "€" if target_currency_input == "EUR" else "$"
-    is_ocean = (ship_type == "2")
+    is_ocean = (ship_type == "2" or len(origin_input) == 5 or len(dest_input) == 5)
 
     try:
         if is_ocean:
