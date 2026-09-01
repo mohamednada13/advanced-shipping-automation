@@ -2,9 +2,8 @@ import random
 from datetime import datetime, timedelta
 
 def calculate_air_freight(origin, destination, weight, volume, cargo_value, target_currency, fx_rate, currency_symbol, start_date):
-    print(f"✈️ [Air Engine] Validating inputs and processing aviation compliance...")
+    print(f"✈️ [Air Engine] Processing validated aviation compliance pipeline...")
     
-    # التحقق من شروط الأحرف الصارمة التي حددتها أنت للمطارات
     if len(origin) < 3 or len(origin) > 4 or len(destination) < 3 or len(destination) > 4:
         raise ValueError("❌ [Air Error] Airport codes must be strictly between 3 and 4 characters (IATA/ICAO).")
         
