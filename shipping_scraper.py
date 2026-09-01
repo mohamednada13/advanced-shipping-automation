@@ -78,22 +78,32 @@ if __name__ == "__main__":
         cargo_value_input = input("Cargo Value: ").strip()
         target_currency_input = input("Currency (USD or EUR): ").strip().upper()
 
-    # --- 🔥 صمام الأمان الاستباقي المطلق والنهائي (معزول تماماً خارج أي Try لإيقاف السيرفر فوراً) ---
+    # --- 🛡️ صمام الخروج الناعم والذكي المستقل (Graceful Exit Architecture) ---
     if ship_type == "1":
         if len(origin_input) < 3 or len(origin_input) > 4 or len(dest_input) < 3 or len(dest_input) > 4:
-            print("\n❌ [CRITICAL INPUT ERROR] Invalid Air Freight Selection!")
-            print(f"-> Your inputs: Origin='{origin_input}' ({len(origin_input)} chars), Destination='{dest_input}' ({len(dest_input)} chars)")
-            print("-> Requirement: Airport codes MUST be strictly 3 or 4 characters long (IATA/ICAO codes).\n")
-            sys.exit("Execution halted due to validation failure. Please try again with valid airport inputs.")
+            print("\n" + "="*60)
+            print("⚠️  [INPUT VALIDATION NOTICE] AUTOMATION ENGINE IDLE")
+            print("="*60)
+            print(f" Your Input Location: '{origin_input}' to '{dest_input}'")
+            print(" Reason: Air Freight fields require 3 or 4-character codes (IATA/ICAO).")
+            print(" Action: No calculation performed. No email dispatched.")
+            print(" Please check your parameters and trigger a new workflow run.")
+            print("="*60 + "\n")
+            sys.exit(0) # الخروج الآمن 100% باللون الأخضر دون انهيار السيرفر ميكانيكياً
 
     if ship_type == "2":
         if len(origin_input) != 5 or len(dest_input) != 5:
-            print("\n❌ [CRITICAL INPUT ERROR] Invalid Ocean Freight Selection!")
-            print(f"-> Your inputs: POL='{origin_input}' ({len(origin_input)} chars), POD='{dest_input}' ({len(dest_input)} chars)")
-            print("-> Requirement: Maritime port codes MUST be strictly 5 characters long (UN/LOCODE standard).\n")
-            sys.exit("Execution halted due to validation failure. Please try again with valid 5-character port inputs.")
+            print("\n" + "="*60)
+            print("⚠️  [INPUT VALIDATION NOTICE] AUTOMATION ENGINE IDLE")
+            print("="*60)
+            print(f" Your Input Location: '{origin_input}' to '{dest_input}'")
+            print(" Reason: Maritime Freight fields require strictly 5-character codes (UN/LOCODE).")
+            print(" Action: No calculation performed. No email dispatched.")
+            print(" Please check your parameters and trigger a new workflow run.")
+            print("="*60 + "\n")
+            sys.exit(0)
 
-    # --- تشغيل المحرك المالي والربط بعد اجتياز الفحص الاستباقي بنجاح 100% ---
+    # --- تشغيل المحرك والربط الفعلي بعد النجاح واجتياز الفحص ---
     fx_rate, currency_symbol = 1.10, "€" if target_currency_input == "EUR" else "$"
     is_ocean = (ship_type == "2")
 
