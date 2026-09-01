@@ -17,7 +17,7 @@ def send_shipping_email(excel_filepath, origin, destination):
     SMTP_SERVER = "smtp.gmail.com"
     SMTP_PORT = 465
     
-    # 🔐 Fetching your clean 16-character app password from secrets vault
+    # 🔐 Safely extraction of your clean 16-character app password from repository secrets
     SENDER_PASSWORD = os.environ.get("GMAIL_PASSWORD_TOKEN")
     if not SENDER_PASSWORD:
         print("⚠️ Warning: GMAIL_PASSWORD_TOKEN environment variable is missing on cloud runner.")
@@ -50,7 +50,7 @@ def send_shipping_email(excel_filepath, origin, destination):
         print(f"❌ Email transmission layer error: {e}")
 
 if __name__ == "__main__":
-    # Robust safe fallbacks to process direct system argument offsets securely
+    # Safe structural fallbacks for incoming workflow execution inputs
     ship_type = "1"
     origin_input = "CAI"
     dest_input = "LHR"
@@ -75,15 +75,18 @@ if __name__ == "__main__":
     if len(sys.argv) > 10: cargo_value_input = str(sys.argv[10]).strip()
     if len(sys.argv) > 11: target_currency_input = str(sys.argv[11]).upper().strip()
 
-    # --- 🛡️ Graceful Exit Pre-Validation Guardrails ---
-    if ship_type == "1":
+    # --- 🛡️ Strict Pre-Validation Routing Decision Based on Location Code Length ---
+    is_ocean = (len(origin_input) == 5 or len(dest_input) == 5)
+
+    if not is_ocean:
+        # Strict verification for Air routes (3-4 characters)
         if len(origin_input) < 3 or len(origin_input) > 4 or len(dest_input) < 3 or len(dest_input) > 4:
             print("\n" + "="*70 + "\n⚠️  [INPUT VALIDATION NOTICE] AUTOMATION ENGINE IDLE\n" + "="*70)
             print(" Reason: Air Freight fields require strictly 3 or 4-character codes (IATA/ICAO).")
             print(" Action: No calculation performed. No email transmission triggered.\n" + "="*70 + "\n")
             sys.exit(0)
-
-    if ship_type == "2":
+    else:
+        # Strict verification for Ocean routes (strictly 5 characters)
         if len(origin_input) != 5 or len(dest_input) != 5:
             print("\n" + "="*70 + "\n⚠️  [INPUT VALIDATION NOTICE] AUTOMATION ENGINE IDLE\n" + "="*70)
             print(" Reason: Ocean Freight fields require strictly 5-character codes (UN/LOCODE).")
@@ -91,7 +94,6 @@ if __name__ == "__main__":
             sys.exit(0)
 
     fx_rate, currency_symbol = 1.10, "€" if target_currency_input == "EUR" else "$"
-    is_ocean = (ship_type == "2")
 
     try:
         if is_ocean:
