@@ -1,7 +1,6 @@
 import random
 from datetime import datetime
 
-# استدعاء الحالات الثلاث المنفصلة تلبية لشروطك الهندسية الاحترافية
 from ocean_lcl import calculate_ocean_lcl
 from ocean_fcl import calculate_ocean_fcl
 from ocean_hybrid import calculate_ocean_hybrid
@@ -29,7 +28,6 @@ def calculate_ocean_freight(origin, destination, weight, volume, count_20ft, cou
 
     final_rows = []
     for i, carrier in enumerate(carriers):
-        # توجيه الحمل للملف المناسب وعزل المخرجات تماماً
         if shipment_type == "1":
             row = calculate_ocean_lcl(origin, destination, weight, volume, target_currency, fx_rate, currency_symbol, base_date, carrier, i)
         elif (c20 > 0 or c40 > 0) and v_num > 0:
@@ -37,7 +35,6 @@ def calculate_ocean_freight(origin, destination, weight, volume, count_20ft, cou
         else:
             row = calculate_ocean_fcl(origin, destination, weight, count_20ft, count_40ft, target_currency, fx_rate, currency_symbol, base_date, carrier, i)
             
-        # حساب الموديل المالي والتأمين النهائي الموحد داخل المدير العام
         p_raw_usd = row[f"Total Freight Cost ({target_currency})"]
         cif_usd = val_num + p_raw_usd
         ins_usd = max(50.0, (cif_usd * 1.10) * 0.003) if val_num > 0 else 0.0
@@ -47,5 +44,6 @@ def calculate_ocean_freight(origin, destination, weight, volume, count_20ft, cou
         
         row[f"Total Freight Cost ({target_currency})"] = f"{currency_symbol}{p_final}"
         row[f"Cargo Insurance ({target_currency})"] = f"{currency_symbol}{ins_final}" if ins_final > 0 else f"{currency_symbol}0.00"
+        
         final_rows.append(row)
-         return final_rows
+    return final_rows
