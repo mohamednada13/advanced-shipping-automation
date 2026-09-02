@@ -1,14 +1,16 @@
-import asyncio
+import sys
+import os
 import random
-from datetime import datetime
+import requests
+import re
+from datetime import datetime, timedelta
 
 from ocean_lcl import calculate_ocean_lcl
 from ocean_fcl import calculate_ocean_fcl
 from ocean_hybrid import calculate_ocean_hybrid
-from playwright.async_api import async_playwright
 
 def calculate_ocean_freight(origin, destination, weight, volume, count_20ft, count_40ft, shipment_type, cargo_value, target_currency, fx_rate, currency_symbol, start_date):
-    print(f"🚢 [Live Ocean Scraper] Launching Headless Chromium to query real-world maritime pricing...")
+    print(f"🚢 [Cloud Proxy Scraper] Fetching via Crawlbase automated gateway...")
     
     if len(origin) != 5 or len(destination) != 5:
         raise ValueError("❌ [Ocean Error] Maritime port codes must be strictly 5 characters.")
@@ -21,31 +23,32 @@ def calculate_ocean_freight(origin, destination, weight, volume, count_20ft, cou
     except:
         val_num, v_num, c20, c40 = 0.0, 0.0, 0, 0
 
-    async def scrape_live_ocean_rates():
-        async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=True)
-            page = await browser.new_page()
-            url = f"https://searates.com{origin}&destination={destination}"
-            try:
-                await page.goto(url, timeout=45000)
-                await page.wait_for_load_state("networkidle")
-                live_text = await page.locator(".price-tag-value").first.inner_text()
-                base_market_usd = float(live_text.replace("$", "").replace(",", "").strip())
-            except Exception as e:
-                print(f"⚠️ Ocean platform layout timed out ({e}). Utilizing global container baseline index...")
-                base_market_usd = 2350.00
-            await browser.close()
-            return base_market_usd
+    # قراءة التوكن الجديد المخزن في الخزنة السحابية لجيت هاب لجلب أسعار البورصة البحرية حياً
+    CRAWLBASE_TOKEN = os.environ.get("SHIPPING_API_KEY")
+    target_url = f"https://searates.com{origin}&destination={destination}"
+    
+    if CRAWLBASE_TOKEN:
+        crawlbase_gateway = f"https://crawlbase.com{CRAWLBASE_TOKEN}&url={target_url}&ajax=true"
+        try:
+            print("🌐 Connecting through residential proxy nodes to bypass Cloudflare...")
+            response = requests.get(crawlbase_gateway, timeout=30)
+            response.raise_for_status()
+            html_content = response.text
+            
+            # قشط السعر الصافي من قلب الصفحة المخترقة بالبروكساي
+            price_matches = re.findall(r'class="price-tag-value"[^>]*>\s*\$?([\d,\.]+)', html_content)
+            if price_matches:
+                base_market_usd = float(price_matches[0].replace(",", "").strip())
+                print(f"🎯 Cloud Proxy Breakthrough! Extracted Live Rate: ${base_market_usd}")
+            else:
+                print("⚠️ Selector mismatch. Applying active current market benchmark...")
+                base_market_usd = 11282.00
+        except Exception as e:
+            print(f"⚠️ Proxy timeout ({e}). Using verified baseline...")
+            base_market_usd = 11282.00
+    else:
+        base_market_usd = 11282.00
 
-    try:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        base_scraped_usd = loop.run_until_complete(scrape_live_ocean_rates())
-        loop.close()
-    except Exception as network_err:
-        print(f"⚠️ Network gateway block: {network_err}")
-        base_scraped_usd = 2350.00
-        
     carriers = ["Maersk Line", "CMA CGM", "MSC Shipping", "Hapag-Lloyd", "ONE Line", "COSCO Shipping"]
     random.shuffle(carriers)
     carriers = carriers[:6]
@@ -55,24 +58,24 @@ def calculate_ocean_freight(origin, destination, weight, volume, count_20ft, cou
 
     final_rows = []
     for i, carrier in enumerate(carriers):
+        carrier_variance = i * 45.0
         if shipment_type == "1":
             row = calculate_ocean_lcl(origin, destination, weight, volume, target_currency, fx_rate, currency_symbol, base_date, carrier, i)
-            p_raw_usd = row[f"Total Freight Cost ({target_currency})"] + (base_scraped_usd * 0.05)
+            p_raw_usd = (95.00 * max(v_num, float(weight)/1000)) + 120.0
         elif (c20 > 0 or c40 > 0) and v_num > 0:
             row = calculate_ocean_hybrid(origin, destination, weight, volume, count_20ft, count_40ft, target_currency, fx_rate, currency_symbol, base_date, carrier, i)
-            p_raw_usd = (base_scraped_usd * c20) + (base_scraped_usd * 1.5 * c40) + (v_num * 55.0)
+            p_raw_usd = ((base_market_usd * 0.55) * c20) + ((base_market_usd + carrier_variance) * c40) + (v_num * 80.0)
         else:
             row = calculate_ocean_fcl(origin, destination, weight, count_20ft, count_40ft, target_currency, fx_rate, currency_symbol, base_date, carrier, i)
-            p_raw_usd = (base_scraped_usd * c20) + (base_scraped_usd * 1.5 * c40) + (i * 75.0)
-            
+            p_raw_usd = ((base_market_usd * 0.55) * c20) + ((base_market_usd + carrier_variance) * c40)
+
         cif_usd = val_num + p_raw_usd
         ins_usd = max(50.0, (cif_usd * 1.10) * 0.003) if val_num > 0.0 else 0.0
-        
         p_final = round(p_raw_usd / fx_rate, 2) if target_currency == "EUR" else round(p_raw_usd, 2)
         ins_final = round(ins_usd / fx_rate, 2) if target_currency == "EUR" else round(ins_usd, 2)
         
         row[f"Total Freight Cost ({target_currency})"] = f"{currency_symbol}{p_final}"
-        row[f"Cargo Insurance ({target_currency})"] = f"{currency_symbol}{ins_final}"
+        row[f"Cargo Insurance ({target_currency})"] = f"{currency_symbol}{ins_final}" if ins_final > 0 else f"{currency_symbol}0.00"
         final_rows.append(row)
         
     return final_rows
