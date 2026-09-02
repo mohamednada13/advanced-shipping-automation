@@ -14,10 +14,11 @@ def send_shipping_email(excel_filepath, origin, destination):
     SENDER_EMAIL = "mohamednada1381979@gmail.com"  
     RECEIVER_EMAIL = "mohamednada1381979@gmail.com" 
     
+    # 🎯 تم التصحيح الصارم والنهائي لعنوان سيرفر جوجل والبورت هنا
     SMTP_SERVER = "smtp.gmail.com"
     SMTP_PORT = 465
     
-    # 🔐 Safely extraction of your clean 16-character app password from repository secrets
+    # 🔐 قراءة كلمة سر التطبيق الصافية والجديدية من الخزنة السحابية لجيت هاب بأمان
     SENDER_PASSWORD = os.environ.get("GMAIL_PASSWORD_TOKEN")
     if not SENDER_PASSWORD:
         print("⚠️ Warning: GMAIL_PASSWORD_TOKEN environment variable is missing on cloud runner.")
@@ -41,6 +42,7 @@ def send_shipping_email(excel_filepath, origin, destination):
             msg.attach(part)
             
     try:
+        # الاتصال المباشر والآمن بقناة جوجل المشفرة بالكامل
         server = smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT)
         server.login(SENDER_EMAIL, SENDER_PASSWORD)
         server.sendmail(SENDER_EMAIL, RECEIVER_EMAIL, msg.as_string())
@@ -50,7 +52,6 @@ def send_shipping_email(excel_filepath, origin, destination):
         print(f"❌ Email transmission layer error: {e}")
 
 if __name__ == "__main__":
-    # Safe structural fallbacks for incoming workflow execution inputs
     ship_type = "1"
     origin_input = "CAI"
     dest_input = "LHR"
@@ -63,34 +64,27 @@ if __name__ == "__main__":
     cargo_value_input = "0"
     target_currency_input = "EUR"
 
-    if len(sys.argv) > 1: ship_type = str(sys.argv[1]).strip()
-    if len(sys.argv) > 2: origin_input = str(sys.argv[2]).upper().strip()
-    if len(sys.argv) > 3: dest_input = str(sys.argv[3]).upper().strip()
-    if len(sys.argv) > 4: weight_input = str(sys.argv[4]).strip()
-    if len(sys.argv) > 5: volume_input = str(sys.argv[5]).strip()
-    if len(sys.argv) > 6: count_20ft_input = str(sys.argv[6]).strip()
-    if len(sys.argv) > 7: count_40ft_input = str(sys.argv[7]).strip()
-    if len(sys.argv) > 8: start_date_input = str(sys.argv[8]).strip()
-    if len(sys.argv) > 9: end_date_input = str(sys.argv[9]).strip()
-    if len(sys.argv) > 10: cargo_value_input = str(sys.argv[10]).strip()
-    if len(sys.argv) > 11: target_currency_input = str(sys.argv[11]).upper().strip()
+    if len(sys.argv) > 1: ship_type = str(sys.argv).strip()
+    if len(sys.argv) > 2: origin_input = str(sys.argv).upper().strip()
+    if len(sys.argv) > 3: dest_input = str(sys.argv).upper().strip()
+    if len(sys.argv) > 4: weight_input = str(sys.argv).strip()
+    if len(sys.argv) > 5: volume_input = str(sys.argv).strip()
+    if len(sys.argv) > 6: count_20ft_input = str(sys.argv).strip()
+    if len(sys.argv) > 7: count_40ft_input = str(sys.argv).strip()
+    if len(sys.argv) > 8: start_date_input = str(sys.argv).strip()
+    if len(sys.argv) > 9: end_date_input = str(sys.argv).strip()
+    if len(sys.argv) > 10: cargo_value_input = str(sys.argv).strip()
+    if len(sys.argv) > 11: target_currency_input = str(sys.argv).upper().strip()
 
-    # --- 🛡️ Strict Pre-Validation Routing Decision Based on Location Code Length ---
     is_ocean = (len(origin_input) == 5 or len(dest_input) == 5)
 
     if not is_ocean:
-        # Strict verification for Air routes (3-4 characters)
         if len(origin_input) < 3 or len(origin_input) > 4 or len(dest_input) < 3 or len(dest_input) > 4:
             print("\n" + "="*70 + "\n⚠️  [INPUT VALIDATION NOTICE] AUTOMATION ENGINE IDLE\n" + "="*70)
-            print(" Reason: Air Freight fields require strictly 3 or 4-character codes (IATA/ICAO).")
-            print(" Action: No calculation performed. No email transmission triggered.\n" + "="*70 + "\n")
             sys.exit(0)
     else:
-        # Strict verification for Ocean routes (strictly 5 characters)
         if len(origin_input) != 5 or len(dest_input) != 5:
             print("\n" + "="*70 + "\n⚠️  [INPUT VALIDATION NOTICE] AUTOMATION ENGINE IDLE\n" + "="*70)
-            print(" Reason: Ocean Freight fields require strictly 5-character codes (UN/LOCODE).")
-            print(" Action: No calculation performed. No email transmission triggered.\n" + "="*70 + "\n")
             sys.exit(0)
 
     fx_rate, currency_symbol = 1.10, "€" if target_currency_input == "EUR" else "$"
@@ -110,12 +104,7 @@ if __name__ == "__main__":
 
         if final_data:
             df = pd.DataFrame(final_data)
-            
             print("\n" + "="*80)
-            print(f"📊 LIVE LOGISTICS REPORT OUTPUT ({target_currency_input})")
-            print("="*80)
-            pd.set_option('display.max_columns', None)
-            pd.set_option('display.width', 1000)
             print(df.to_string(index=False))
             print("="*80 + "\n")
             
@@ -123,8 +112,8 @@ if __name__ == "__main__":
             df.to_excel(filename, index=False)
             send_shipping_email(filename, origin_input, dest_input)
             os.remove(filename)
-            print("✨ Environment cleanup successful.")
+            print("✨ Cleanup successful.")
             
     except Exception as error:
-        print(f"\n❌ [Runtime Crash] Calculation engine failed:\n{error}\n")
+        print(f"\n❌ Calculation failed:\n{error}\n")
         sys.exit(1)
