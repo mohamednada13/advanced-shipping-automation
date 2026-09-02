@@ -14,11 +14,10 @@ def send_shipping_email(excel_filepath, origin, destination):
     SENDER_EMAIL = "mohamednada1381979@gmail.com"  
     RECEIVER_EMAIL = "mohamednada1381979@gmail.com" 
     
-    # 🎯 تم التصحيح الصارم والنهائي لعنوان سيرفر جوجل والبورت هنا
-    SMTP_SERVER = "smtp.gmail.com"
+    SMTP_SERVER = "://gmail.com"
     SMTP_PORT = 465
     
-    # 🔐 قراءة كلمة سر التطبيق الصافية والجديدية من الخزنة السحابية لجيت هاب بأمان
+    # 🔐 قراءة مفتاح الأمان الصافي للـ Gmail من الخزنة السحابية
     SENDER_PASSWORD = os.environ.get("GMAIL_PASSWORD_TOKEN")
     if not SENDER_PASSWORD:
         print("⚠️ Warning: GMAIL_PASSWORD_TOKEN environment variable is missing on cloud runner.")
@@ -41,79 +40,75 @@ def send_shipping_email(excel_filepath, origin, destination):
             part.add_header("Content-Disposition", f"attachment; filename={os.path.basename(excel_filepath)}")
             msg.attach(part)
             
-    try:
-        # الاتصال المباشر والآمن بقناة جوجل المشفرة بالكامل
-        server = smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT)
-        server.login(SENDER_EMAIL, SENDER_PASSWORD)
-        server.sendmail(SENDER_EMAIL, RECEIVER_EMAIL, msg.as_string())
-        server.quit()
-        print("🚀 Success! Rate report has been sent to your email.")
-    except Exception as e:
-        print(f"❌ Email transmission layer error: {e}")
+    server = smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT)
+    server.login(SENDER_EMAIL, SENDER_PASSWORD)
+    server.sendmail(SENDER_EMAIL, RECEIVER_EMAIL, msg.as_string())
+    server.quit()
+    print("🚀 Success! Rate report has been sent to your email.")
 
 if __name__ == "__main__":
-    ship_type = "1"
-    origin_input = "CAI"
-    dest_input = "LHR"
-    weight_input = "100"
-    volume_input = "1"
-    count_20ft_input = "0"
-    count_40ft_input = "0"
-    start_date_input = "2026-09-01"
-    end_date_input = "2026-09-15"
-    cargo_value_input = "0"
-    target_currency_input = "EUR"
+    v_args = []
+    for arg in sys.argv:
+        v_args.append(str(arg).strip())
+        
+    if len(v_args) > 11:
+        # 🎯 تصحيح الفك الرقمي المتتابع الدقيق للمصفوفة السحابية بالملي لمنع التشوه
+        ship_type = v_args[1]
+        origin_input = v_args[2].upper().strip()
+        dest_input = v_args[3].upper().strip()
+        weight_input = v_args[4]
+        volume_input = v_args[5]
+        count_20ft_input = v_args[6]
+        count_40ft_input = v_args[7]
+        start_date_input = v_args[8]
+        end_date_input = v_args[9]
+        cargo_value_input = v_args[10]
+        target_currency_input = v_args[11].upper().strip()
+    else:
+        sys.exit("CLI interactive mode disabled on Cloud Run environment due to insufficient arguments.")
 
-    if len(sys.argv) > 1: ship_type = str(sys.argv).strip()
-    if len(sys.argv) > 2: origin_input = str(sys.argv).upper().strip()
-    if len(sys.argv) > 3: dest_input = str(sys.argv).upper().strip()
-    if len(sys.argv) > 4: weight_input = str(sys.argv).strip()
-    if len(sys.argv) > 5: volume_input = str(sys.argv).strip()
-    if len(sys.argv) > 6: count_20ft_input = str(sys.argv).strip()
-    if len(sys.argv) > 7: count_40ft_input = str(sys.argv).strip()
-    if len(sys.argv) > 8: start_date_input = str(sys.argv).strip()
-    if len(sys.argv) > 9: end_date_input = str(sys.argv).strip()
-    if len(sys.argv) > 10: cargo_value_input = str(sys.argv).strip()
-    if len(sys.argv) > 11: target_currency_input = str(sys.argv).upper().strip()
-
+    # --- 🛡️ صمامات الأمان الاستباقية للتحقق الصارم من معايير الموانئ والمطارات ---
     is_ocean = (len(origin_input) == 5 or len(dest_input) == 5)
 
     if not is_ocean:
         if len(origin_input) < 3 or len(origin_input) > 4 or len(dest_input) < 3 or len(dest_input) > 4:
-            print("\n" + "="*70 + "\n⚠️  [INPUT VALIDATION NOTICE] AUTOMATION ENGINE IDLE\n" + "="*70)
+            print(f"\n❌ [CRITICAL INPUT ERROR] Invalid Air Location: {origin_input} to {dest_input}")
             sys.exit(0)
     else:
         if len(origin_input) != 5 or len(dest_input) != 5:
-            print("\n" + "="*70 + "\n⚠️  [INPUT VALIDATION NOTICE] AUTOMATION ENGINE IDLE\n" + "="*70)
+            print(f"\n❌ [CRITICAL INPUT ERROR] Invalid Ocean Location: {origin_input} to {dest_input}")
             sys.exit(0)
 
     fx_rate, currency_symbol = 1.10, "€" if target_currency_input == "EUR" else "$"
 
-    try:
-        if is_ocean:
-            final_data = calculate_ocean_freight(
-                origin_input, dest_input, weight_input, volume_input, 
-                count_20ft_input, count_40ft_input, ship_type, 
-                cargo_value_input, target_currency_input, fx_rate, currency_symbol, start_date_input
-            )
-        else:
-            final_data = calculate_air_freight(
-                origin_input, dest_input, weight_input, volume_input, 
-                cargo_value_input, target_currency_input, fx_rate, currency_symbol, start_date_input
-            )
+    # استدعاء دالات المعالجة وتمرير الباراميترات الصافية والمطابقة بالملي
+    if is_ocean:
+        final_data = calculate_ocean_freight(
+            origin_input, dest_input, weight_input, volume_input, 
+            count_20ft_input, count_40ft_input, ship_type, 
+            cargo_value_input, target_currency_input, fx_rate, currency_symbol, start_date_input
+        )
+    else:
+        final_data = calculate_air_freight(
+            origin_input, dest_input, weight_input, volume_input, 
+            cargo_value_input, target_currency_input, fx_rate, currency_symbol, start_date_input
+        )
 
-        if final_data:
-            df = pd.DataFrame(final_data)
-            print("\n" + "="*80)
-            print(df.to_string(index=False))
-            print("="*80 + "\n")
-            
-            filename = f"freight_report_{origin_input}_to_{dest_input}_{target_currency_input}.xlsx"
-            df.to_excel(filename, index=False)
-            send_shipping_email(filename, origin_input, dest_input)
-            os.remove(filename)
-            print("✨ Cleanup successful.")
-            
-    except Exception as error:
-        print(f"\n❌ Calculation failed:\n{error}\n")
-        sys.exit(1)
+    if final_data:
+        df = pd.DataFrame(final_data)
+        
+        print("\n" + "="*80)
+        print(f"📊 LIVE LOGISTICS REPORT OUTPUT ({target_currency_input})")
+        print("="*80)
+        pd.set_option('display.max_columns', None)
+        pd.set_option('display.width', 1000)
+        print(df.to_string(index=False))
+        print("="*80 + "\n")
+        
+        filename = f"freight_report_{origin_input}_to_{dest_input}_{target_currency_input}.xlsx"
+        df.to_excel(filename, index=False)
+        
+        # استدعاء دالة الإرسال الصريحة والمباشرة
+        send_shipping_email(filename, origin_input, dest_input)
+        os.remove(filename)
+        print("✨ Cloud Environment cleanup successful.")
