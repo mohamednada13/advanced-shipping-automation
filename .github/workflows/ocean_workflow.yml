@@ -6,11 +6,11 @@ on:
       origin:
         description: "Port of Loading (POL) - (5 chars)"
         required: true
-        default: "ITGOA"
+        default: "CNJIU"
       destination:
         description: "Port of Discharge (POD) - (5 chars)"
         required: true
-        default: "EGALY"
+        default: "EGSOK"
       count_20ft:
         description: "Qty 20FT"
         required: false
@@ -18,7 +18,7 @@ on:
       count_40ft:
         description: "Qty 40FT"
         required: false
-        default: "0"
+        default: "1"
       weight:
         description: "Total Weight KG"
         required: false
@@ -27,14 +27,6 @@ on:
         description: "Total Volume CBM"
         required: false
         default: "0"
-      start_date:
-        description: "Sailing Date (YYYY-MM-DD)"
-        required: false
-        default: "2026-09-01"
-      end_date:
-        description: "End Date (YYYY-MM-DD)"
-        required: false
-        default: "2026-09-15"
       cargo_value:
         description: "Cargo Value"
         required: false
@@ -46,7 +38,7 @@ on:
         options:
           - "EUR"
           - "USD"
-        default: "EUR"
+        default: "USD"
 
 jobs:
   run-ocean-scraper:
@@ -57,11 +49,13 @@ jobs:
       with:
         python-version: "3.10"
     - run: pip install playwright pandas openpyxl requests && playwright install chromium
-    - name: Run Scraper
+    - name: Run Scraper Engine with Dynamic Today Date
       env:
-        # Connecting your script to the secure repository secret vault
         GMAIL_PASSWORD_TOKEN: ${{ secrets.GMAIL_PASSWORD_TOKEN }}
+        SHIPPING_API_KEY: ${{ secrets.SHIPPING_API_KEY }}
       run: |
+        TODAY_DATE=$(date +'%Y-%m-%d')
+        END_DATE=$(date -d "+14 days" +'%Y-%m-%d')
         SHIP_TYPE_NUM="2"
         if [ "${{ github.event.inputs.count_20ft }}" = "0" ] && [ "${{ github.event.inputs.count_40ft }}" = "0" ]; then SHIP_TYPE_NUM="1"; fi
-        python shipping_scraper.py "$SHIP_TYPE_NUM" "${{ github.event.inputs.origin }}" "${{ github.event.inputs.destination }}" "${{ github.event.inputs.weight }}" "${{ github.event.inputs.volume }}" "${{ github.event.inputs.count_20ft }}" "${{ github.event.inputs.count_40ft }}" "${{ github.event.inputs.start_date }}" "${{ github.event.inputs.end_date }}" "${{ github.event.inputs.cargo_value }}" "${{ github.event.inputs.target_currency }}"
+        python shipping_scraper.py "$SHIP_TYPE_NUM" "${{ github.event.inputs.origin }}" "${{ github.event.inputs.destination }}" "${{ github.event.inputs.weight }}" "${{ github.event.inputs.volume }}" "${{ github.event.inputs.count_20ft }}" "${{ github.event.inputs.count_40ft }}" "$TODAY_DATE" "$END_DATE" "${{ github.event.inputs.cargo_value }}" "${{ github.event.inputs.target_currency }}"
