@@ -6,7 +6,7 @@ import re
 from datetime import datetime, timedelta
 
 def calculate_air_freight(origin, destination, weight, volume, cargo_value, target_currency, fx_rate, currency_symbol, start_date):
-    print(f"✈️ [Cloud Air Proxy Scraper] Fetching via Crawlbase automated aviation gateway...")
+    print("✈️ [Cloud Air Proxy Scraper] Fetching via Crawlbase automated aviation gateway...")
     
     if len(origin) < 3 or len(origin) > 4 or len(destination) < 3 or len(destination) > 4:
         raise ValueError("❌ [Air Error] Airport codes must be strictly between 3 and 4 characters.")
@@ -18,7 +18,6 @@ def calculate_air_freight(origin, destination, weight, volume, cargo_value, targ
     except:
         w_num, v_num, val_num = 100.0, 1.0, 0.0
 
-    # قراءة نفس التوكن السري من الخزنة السحابية لجيت هاب لجلب أسعار البورصة الجوية حياً
     CRAWLBASE_TOKEN = os.environ.get("SHIPPING_API_KEY")
     target_url = f"https://airrates.com{origin}&destination={destination}"
     
@@ -30,19 +29,17 @@ def calculate_air_freight(origin, destination, weight, volume, cargo_value, targ
             response.raise_for_status()
             html_content = response.text
             
-            # قشط السعر الحي من داخل الصفحة الجوية المخترقة بالبروكساي
             price_matches = re.findall(r'class="price-tag-value"[^>]*>\s*\$?([\d,\.]+)', html_content)
             if price_matches:
                 base_market_usd = float(price_matches[0].replace(",", "").strip())
                 print(f"🎯 Cloud Air Proxy Breakthrough! Extracted Live Rate: ${base_market_usd}")
             else:
-                print("⚠️ Selector mismatch. Applying verified dynamic aviation index...")
-                base_market_usd = 4.50 * max(w_num, v_num * 167.0)
+                base_market_usd = 450.00
         except Exception as e:
             print(f"⚠️ Proxy timeout ({e}). Using verified aviation baseline...")
-            base_market_usd = 4.50 * max(w_num, v_num * 167.0)
+            base_market_usd = 450.00
     else:
-        base_market_usd = 4.50 * max(w_num, v_num * 167.0)
+        base_market_usd = 450.00
 
     base_carriers = ["Emirates SkyCargo", "Qatar Cargo", "EgyptAir Cargo", "Saudia Cargo", "Lufthansa Cargo", "DHL Aviation"]
     random.shuffle(base_carriers)
@@ -56,7 +53,7 @@ def calculate_air_freight(origin, destination, weight, volume, cargo_value, targ
     chargeable_weight = max(w_num, v_num * 167.0)
     final_rows = []
     for i, carrier in enumerate(carriers):
-        single_air_usd = (base_market_usd / chargeable_weight) + (i * 0.15) if base_market_usd > 100 else 3.50 + (i * 0.15)
+        single_air_usd = round((base_market_usd / 150.0) + (i * 0.12), 2) if base_market_usd > 50 else 3.50 + (i * 0.12)
         p_raw_usd = (chargeable_weight * single_air_usd) + 120.0
         
         cif_usd = val_num + p_raw_usd
