@@ -14,7 +14,7 @@ def send_shipping_email(excel_filepath, origin, destination):
     SENDER_EMAIL = "mohamednada1381979@gmail.com"  
     RECEIVER_EMAIL = "mohamednada1381979@gmail.com" 
     
-    SMTP_SERVER = "://gmail.com"
+    SMTP_SERVER = "smtp.gmail.com"
     SMTP_PORT = 465
     
     # 🔐 قراءة مفتاح الأمان الصافي للـ Gmail من الخزنة السحابية
